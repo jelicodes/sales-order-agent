@@ -15,6 +15,7 @@ AI Agent untuk membantu proses order fashion grosir B2B. Multi-turn conversation
 - **Backend:** FastAPI
 - **Vector DB:** ChromaDB
 - **Database:** SQLite
+- **Observability:** Langfuse (agent tracing) + LangSmith
 
 ## Fitur
 
@@ -32,6 +33,7 @@ AI Agent untuk membantu proses order fashion grosir B2B. Multi-turn conversation
 - Python 3.11+
 - Groq API Key
 - Google API Key (untuk Gemini Embedding)
+- Langfuse API Key (untuk agent observability) — opsional
 
 ### Installation
 
@@ -45,7 +47,11 @@ pip install -r requirements.txt
 
 # Setup environment
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys:
+# - GROQ_API_KEY
+# - GOOGLE_API_KEY
+# - LANGFUSE_PUBLIC_KEY (opsional)
+# - LANGFUSE_SECRET_KEY (opsional)
 
 # Seed database
 python -m src.data.seed.seed
@@ -64,7 +70,7 @@ Buka `http://localhost:8000/docs` untuk Swagger UI
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/health` | Health check |
+| GET | `/health` | Health check (DB, ChromaDB, Groq, Langfuse) |
 | POST | `/session` | Buat session baru |
 | GET | `/session/{id}` | Get session info |
 | POST | `/chat` | Kirim pesan ke agent |
@@ -121,6 +127,8 @@ src/
 │   └── seed/              # Synthetic data
 ├── api/                    # FastAPI routes
 └── config/                 # Settings
+    ├── settings.py         # Environment config
+    └── langfuse.py         # Langfuse integration
 ```
 
 ## License
