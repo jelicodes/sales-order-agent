@@ -5,6 +5,13 @@ from src.data.database import get_price_tier, get_discount
 @tool
 def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> dict:
     """Hitung harga berdasarkan jumlah pesanan, tier harga, dan diskon yang berlaku."""
+    if quantity <= 0:
+        return {
+            "product_id": product_id, "quantity": quantity,
+            "price_per_unit": 0, "subtotal": 0,
+            "discount": None, "discount_amount": 0,
+            "total": 0, "tier": "N/A"
+        }
     tier = get_price_tier(product_id, quantity)
     if not tier:
         return {"error": "Tidak ada harga tersedia untuk quantity ini"}
