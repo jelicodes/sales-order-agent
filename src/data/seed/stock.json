@@ -1,0 +1,97 @@
+[
+  {
+    "product_id": 1,
+    "variants": [
+      { "color": "Putih", "warehouse": "Tanah Abang", "quantity": 1500 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 1200 },
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 1800 }
+    ]
+  },
+  {
+    "product_id": 2,
+    "variants": [
+      { "color": "Putih", "warehouse": "Tanah Abang", "quantity": 2000 },
+      { "color": "Abu-abu", "warehouse": "Tanah Abang", "quantity": 1600 },
+      { "color": "Biru Muda", "warehouse": "Tanah Abang", "quantity": 1100 },
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 2200 }
+    ]
+  },
+  {
+    "product_id": 3,
+    "variants": [
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 3000 },
+      { "color": "Putih", "warehouse": "Tanah Abang", "quantity": 2800 },
+      { "color": "Abu-abu", "warehouse": "Tanah Abang", "quantity": 1500 }
+    ]
+  },
+  {
+    "product_id": 4,
+    "variants": [
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 2500 },
+      { "color": "Putih", "warehouse": "Tanah Abang", "quantity": 2200 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 1800 }
+    ]
+  },
+  {
+    "product_id": 5,
+    "variants": [
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 500 },
+      { "color": "Cokelat", "warehouse": "Tanah Abang", "quantity": 400 }
+    ]
+  },
+  {
+    "product_id": 6,
+    "variants": [
+      { "color": "Abu-abu", "warehouse": "Tanah Abang", "quantity": 900 },
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 1100 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 750 }
+    ]
+  },
+  {
+    "product_id": 7,
+    "variants": [
+      { "color": "Putih", "warehouse": "Tanah Abang", "quantity": 1000 },
+      { "color": "Putih Stok", "warehouse": "Tanah Abang", "quantity": 800 }
+    ]
+  },
+  {
+    "product_id": 8,
+    "variants": [
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 1200 },
+      { "color": "Navy Gelap", "warehouse": "Tanah Abang", "quantity": 600 }
+    ]
+  },
+  {
+    "product_id": 9,
+    "variants": [
+      { "color": "Khaki", "warehouse": "Tanah Abang", "quantity": 700 },
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 900 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 500 }
+    ]
+  },
+  {
+    "product_id": 10,
+    "variants": [
+      { "color": "Abu-abu", "warehouse": "Tanah Abang", "quantity": 800 },
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 1000 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 600 }
+    ]
+  },
+  {
+    "product_id": 11,
+    "variants": [
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 1400 },
+      { "color": "Cokelat", "warehouse": "Tanah Abang", "quantity": 800 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 1100 }
+    ]
+  },
+  {
+    "product_id": 12,
+    "variants": [
+      { "color": "Hitam", "warehouse": "Tanah Abang", "quantity": 2000 },
+      { "color": "Putih", "warehouse": "Tanah Abang", "quantity": 1500 },
+      { "color": "Navy", "warehouse": "Tanah Abang", "quantity": 1800 },
+      { "color": "Merah", "warehouse": "Tanah Abang", "quantity": 900 }
+    ]
+  }
+]

@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "name": "Polo Premium Cotton",
+    "category": "Polo",
+    "description": "Kemeja polo berbahan katun premium dengan jahitan berkualitas tinggi. Cocok untuk seragam perusahaan maupun penggunaan sehari-hari.",
+    "base_price": 85000,
+    "moq": 100,
+    "lead_time_days": 5
+  },
+  {
+    "id": 2,
+    "name": "Polo Basic",
+    "category": "Polo",
+    "description": "Polo standar dengan bahan katun nyaman dan harga terjangkau. Pilihan tepat untuk pesanan partai besar.",
+    "base_price": 65000,
+    "moq": 100,
+    "lead_time_days": 5
+  },
+  {
+    "id": 3,
+    "name": "Kaos Polos Premium",
+    "category": "Kaos",
+    "description": "Kaos polos berbahan katun combed 30s dengan ketebalan pas dan nyaman dipakai. Tersedia dalam berbagai warna menarik.",
+    "base_price": 55000,
+    "moq": 50,
+    "lead_time_days": 3
+  },
+  {
+    "id": 4,
+    "name": "Kaos Polos Standar",
+    "category": "Kaos",
+    "description": "Kaos polos ekonomis untuk kebutuhan promosi dan event. Kualitas jahitan rapi meskipun harga bersahabat.",
+    "base_price": 35000,
+    "moq": 50,
+    "lead_time_days": 3
+  },
+  {
+    "id": 5,
+    "name": "Jaket Bomber Kulit",
+    "category": "Jaket",
+    "description": "Jaket bomber berbahan kulit sintetis premium dengan desain modern dan elegan. Cocok untuk jaket komunitas atau koleksi pribadi.",
+    "base_price": 250000,
+    "moq": 25,
+    "lead_time_days": 7
+  },
+  {
+    "id": 6,
+    "name": "Jaket Hoodie Premium",
+    "category": "Jaket",
+    "description": "Hoodie premium dengan bahan fleece tebal dan nyaman. Dilengkapi kantong depan dan tali hoodie adjustable.",
+    "base_price": 180000,
+    "moq": 50,
+    "lead_time_days": 7
+  },
+  {
+    "id": 7,
+    "name": "Seragam Kantor Putih",
+    "category": "Seragam",
+    "description": "Kemeja seragam kantor berwarna putih dengan bahan katun ringan dan anti kusut. Tersedia ukuran S hingga XXL.",
+    "base_price": 120000,
+    "moq": 30,
+    "lead_time_days": 5
+  },
+  {
+    "id": 8,
+    "name": "Seragam Kerja Navy",
+    "category": "Seragam",
+    "description": "Seragam kerja warna navy dengan potongan rapi dan profesional. Cocok untuk instansi pemerintah dan swasta.",
+    "base_price": 95000,
+    "moq": 30,
+    "lead_time_days": 5
+  },
+  {
+    "id": 9,
+    "name": "Celana Chino Premium",
+    "category": "Celana",
+    "description": "Celana chino berbahan twill premium dengan potongan slim fit modern. Nyaman untuk aktivitas kantor sehari-hari.",
+    "base_price": 145000,
+    "moq": 30,
+    "lead_time_days": 7
+  },
+  {
+    "id": 10,
+    "name": "Celana Jogger Kantor",
+    "category": "Celana",
+    "description": "Celana jogger dengan desain kasual namun tetap sopan untuk lingkungan kerja. Elastis pinggang dan kerutan di pergelangan kaki.",
+    "base_price": 130000,
+    "moq": 30,
+    "lead_time_days": 7
+  },
+  {
+    "id": 11,
+    "name": "Tas Selempang Premium",
+    "category": "Aksesoris",
+    "description": "Tas selempang berbahan kanvas tebal dengan tali adjustable. Cocok untuk kebutuhan promosi atau hadiah merchandise.",
+    "base_price": 85000,
+    "moq": 50,
+    "lead_time_days": 5
+  },
+  {
+    "id": 12,
+    "name": "Topi Baseball Custom",
+    "category": "Aksesoris",
+    "description": "Topi baseball dengan bordir custom logo perusahaan. Bahan mesh breathable dan nyaman dipakai seharian.",
+    "base_price": 45000,
+    "moq": 100,
+    "lead_time_days": 5
+  }
+]

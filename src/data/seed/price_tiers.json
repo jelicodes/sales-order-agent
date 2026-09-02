@@ -1,0 +1,105 @@
+[
+  {
+    "product_id": 1,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 85000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 80000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 75000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 70000 }
+    ]
+  },
+  {
+    "product_id": 2,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 65000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 61000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 57000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 53000 }
+    ]
+  },
+  {
+    "product_id": 3,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 55000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 51000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 47000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 44000 }
+    ]
+  },
+  {
+    "product_id": 4,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 35000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 32000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 30000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 28000 }
+    ]
+  },
+  {
+    "product_id": 5,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 29, "price_per_unit": 250000 },
+      { "min_qty": 30, "max_qty": 99, "price_per_unit": 235000 },
+      { "min_qty": 100, "max_qty": null, "price_per_unit": 220000 }
+    ]
+  },
+  {
+    "product_id": 6,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 180000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 168000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 157000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 147000 }
+    ]
+  },
+  {
+    "product_id": 7,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 29, "price_per_unit": 120000 },
+      { "min_qty": 30, "max_qty": 99, "price_per_unit": 112000 },
+      { "min_qty": 100, "max_qty": null, "price_per_unit": 105000 }
+    ]
+  },
+  {
+    "product_id": 8,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 29, "price_per_unit": 95000 },
+      { "min_qty": 30, "max_qty": 99, "price_per_unit": 89000 },
+      { "min_qty": 100, "max_qty": null, "price_per_unit": 83000 }
+    ]
+  },
+  {
+    "product_id": 9,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 29, "price_per_unit": 145000 },
+      { "min_qty": 30, "max_qty": 99, "price_per_unit": 135000 },
+      { "min_qty": 100, "max_qty": null, "price_per_unit": 126000 }
+    ]
+  },
+  {
+    "product_id": 10,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 29, "price_per_unit": 130000 },
+      { "min_qty": 30, "max_qty": 99, "price_per_unit": 121000 },
+      { "min_qty": 100, "max_qty": null, "price_per_unit": 113000 }
+    ]
+  },
+  {
+    "product_id": 11,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 85000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 79000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 74000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 69000 }
+    ]
+  },
+  {
+    "product_id": 12,
+    "tiers": [
+      { "min_qty": 1, "max_qty": 99, "price_per_unit": 45000 },
+      { "min_qty": 100, "max_qty": 299, "price_per_unit": 42000 },
+      { "min_qty": 300, "max_qty": 499, "price_per_unit": 39000 },
+      { "min_qty": 500, "max_qty": null, "price_per_unit": 36000 }
+    ]
+  }
+]

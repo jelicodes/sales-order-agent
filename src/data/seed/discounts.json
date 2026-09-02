@@ -1,0 +1,42 @@
+[
+  {
+    "code": "NEWCUSTOMER10",
+    "type": "percentage",
+    "value": 10,
+    "min_qty": 100,
+    "valid_until": "2026-12-31",
+    "description": "Diskon 10% untuk pelanggan baru dengan minimal pembelian 100 pcs"
+  },
+  {
+    "code": "BULK500",
+    "type": "percentage",
+    "value": 5,
+    "min_qty": 500,
+    "valid_until": "2026-12-31",
+    "description": "Diskon 5% untuk pembelian grosir minimal 500 pcs"
+  },
+  {
+    "code": "HEMAT20K",
+    "type": "fixed",
+    "value": 20000,
+    "min_qty": 200,
+    "valid_until": "2026-10-31",
+    "description": "Potongan Rp 20.000 untuk pembelian minimal 200 pcs"
+  },
+  {
+    "code": "MERDEKA15",
+    "type": "percentage",
+    "value": 15,
+    "min_qty": 100,
+    "valid_until": "2026-08-31",
+    "description": "Diskon spesial HUT RI 15% untuk pembelian minimal 100 pcs"
+  },
+  {
+    "code": "FIRSTORDER",
+    "type": "percentage",
+    "value": 8,
+    "min_qty": 50,
+    "valid_until": "2026-12-31",
+    "description": "Diskon 8% untuk pesanan pertama dengan minimal 50 pcs"
+  }
+]
