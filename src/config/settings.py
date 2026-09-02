@@ -4,7 +4,7 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "qwen/qwen3.6-27b"
     GOOGLE_API_KEY: str = ""
     EMBEDDING_MODEL: str = "gemini-embedding-001"
     DATABASE_PATH: str = "data/app.db"
