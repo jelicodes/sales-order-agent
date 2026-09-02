@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -11,6 +12,12 @@ class Settings(BaseSettings):
     CHROMADB_PATH: str = "data/chromadb"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
+    
+    # Langfuse (Agent Observability)
+    LANGFUSE_PUBLIC_KEY: str = ""
+    LANGFUSE_SECRET_KEY: str = ""
+    LANGFUSE_BASE_URL: str = "https://cloud.langfuse.com"
+    LANGFUSE_ENABLED: bool = True
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
