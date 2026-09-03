@@ -1,5 +1,6 @@
 import uuid
 import logging
+import asyncio
 from fastapi import APIRouter, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -35,11 +36,14 @@ async def chat_endpoint(request: Request, req: ChatRequest):
 
     messages.append(HumanMessage(content=req.message))
 
-    result = agent.invoke({
-        "messages": messages,
-        "session_id": session_id,
-        "context": {"request_id": request_id},
-    })
+    result = await asyncio.to_thread(
+        agent.invoke,
+        {
+            "messages": messages,
+            "session_id": session_id,
+            "context": {"request_id": request_id},
+        }
+    )
 
     save_message(session_id, "user", req.message)
     response_content = result["messages"][-1].content
