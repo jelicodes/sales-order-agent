@@ -15,8 +15,23 @@ from src.config.langfuse import get_langfuse_handler
 
 tools = [search_products, get_product_detail, check_stock, calculate_price, create_quote, get_alternatives]
 
+_llm_instance = None
+
+
+def get_llm():
+    """Get or create cached LLM instance."""
+    global _llm_instance
+    if _llm_instance is None:
+        _llm_instance = ChatGroq(
+            model=settings.GROQ_MODEL,
+            api_key=settings.GROQ_API_KEY,
+            temperature=0.3,
+        ).bind_tools(tools)
+    return _llm_instance
+
 
 def create_llm():
+    """Create new LLM instance (for testing or when cache needs refresh)."""
     return ChatGroq(
         model=settings.GROQ_MODEL,
         api_key=settings.GROQ_API_KEY,
@@ -25,7 +40,7 @@ def create_llm():
 
 
 def llm_node(state: AgentState) -> dict:
-    llm = create_llm()
+    llm = get_llm()
     messages = list(state["messages"])
     if not messages or not (isinstance(messages[0], HumanMessage) and SALES_AGENT_PROMPT in messages[0].content):
         messages = [HumanMessage(content=SALES_AGENT_PROMPT)] + messages
