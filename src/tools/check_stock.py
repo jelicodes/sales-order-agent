@@ -1,8 +1,14 @@
+from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 from src.data.database import get_stock_by_product
 
 
-@tool
+class CheckStockInput(BaseModel):
+    product_id: int = Field(description="ID produk")
+    quantity: int = Field(description="Jumlah yang dibutuhkan")
+
+
+@tool(args_schema=CheckStockInput)
 def check_stock(product_id: int, quantity: int) -> dict:
     """Cek ketersediaan stok produk. Masukkan product_id dan jumlah yang dibutuhkan."""
     variants = get_stock_by_product(product_id)

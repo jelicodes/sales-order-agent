@@ -1,8 +1,15 @@
+from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 from src.data.database import get_price_tier, get_discount
 
 
-@tool
+class CalculatePriceInput(BaseModel):
+    product_id: int = Field(description="ID produk")
+    quantity: int = Field(description="Jumlah pesanan")
+    discount_code: str = Field(default="", description="Kode diskon (opsional)")
+
+
+@tool(args_schema=CalculatePriceInput)
 def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> dict:
     """Hitung harga berdasarkan jumlah pesanan, tier harga, dan diskon yang berlaku."""
     if quantity <= 0:

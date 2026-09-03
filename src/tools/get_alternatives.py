@@ -1,8 +1,14 @@
+from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 from src.data.database import get_product_by_id, search_products
 
 
-@tool
+class GetAlternativesInput(BaseModel):
+    product_id: int = Field(description="ID produk asal")
+    reason: str = Field(description="Alasan cari alternatif: 'stock' (stok tidak cukup) atau 'budget' (budget tidak sesuai)")
+
+
+@tool(args_schema=GetAlternativesInput)
 def get_alternatives(product_id: int, reason: str) -> list[dict]:
     """Cari produk alternatif. reason: 'stock' (stok tidak cukup) atau 'budget' (budget tidak sesuai)."""
     original = get_product_by_id(product_id)
