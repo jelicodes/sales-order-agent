@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from langgraph.checkpoint.sqlite import SqliteSaver
 from src.data.database import init_db
 from src.api.health import router as health_router
 from src.api.session import router as session_router
@@ -20,12 +22,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+CHECKPOINT_DB_PATH = Path("data/checkpoints.db")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     init_langfuse()
+    CHECKPOINT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    checkpointer_ctx = SqliteSaver.from_conn_string(str(CHECKPOINT_DB_PATH))
+    checkpointer = checkpointer_ctx.__enter__()
+    app.state.checkpointer = checkpointer
     yield
+    checkpointer_ctx.__exit__(None, None, None)
     shutdown_langfuse()
 
 

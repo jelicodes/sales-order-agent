@@ -1,5 +1,5 @@
 from typing import Optional
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_groq import ChatGroq
 from langgraph.prebuilt import ToolNode
 from src.agents.state import AgentState
@@ -42,8 +42,8 @@ def create_llm():
 def llm_node(state: AgentState) -> dict:
     llm = get_llm()
     messages = list(state["messages"])
-    if not messages or not (isinstance(messages[0], HumanMessage) and SALES_AGENT_PROMPT in messages[0].content):
-        messages = [HumanMessage(content=SALES_AGENT_PROMPT)] + messages
+    if not messages or not (isinstance(messages[0], SystemMessage) and SALES_AGENT_PROMPT in messages[0].content):
+        messages = [SystemMessage(content=SALES_AGENT_PROMPT)] + messages
 
     langfuse_handler = get_langfuse_handler()
     config = {"callbacks": [langfuse_handler]} if langfuse_handler else {}
