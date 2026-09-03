@@ -3,7 +3,20 @@ from pathlib import Path
 from datetime import date
 from contextlib import contextmanager
 
+from cachetools import TTLCache
 from src.config.settings import settings
+
+# Cache for static data
+_product_cache = TTLCache(maxsize=500, ttl=300)  # 5 min
+_price_tier_cache = TTLCache(maxsize=200, ttl=300)
+_discount_cache = TTLCache(maxsize=50, ttl=600)  # 10 min
+
+
+def clear_caches():
+    """Clear all caches (useful after seed)."""
+    _product_cache.clear()
+    _price_tier_cache.clear()
+    _discount_cache.clear()
 
 
 _db_path: str | None = None
@@ -134,11 +147,17 @@ def search_products(query: str, category: str | None = None) -> list[dict]:
 
 
 def get_product_by_id(product_id: int) -> dict | None:
+    if product_id in _product_cache:
+        return _product_cache[product_id]
+
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM products WHERE id = ?", (product_id,))
         row = cursor.fetchone()
-        return dict(row) if row else None
+        result = dict(row) if row else None
+        if result:
+            _product_cache[product_id] = result
+        return result
 
 
 def get_product_variants(product_id: int) -> list[dict]:
@@ -150,6 +169,10 @@ def get_product_variants(product_id: int) -> list[dict]:
 
 
 def get_price_tier(product_id: int, quantity: int) -> dict | None:
+    cache_key = (product_id, quantity)
+    if cache_key in _price_tier_cache:
+        return _price_tier_cache[cache_key]
+
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -164,7 +187,9 @@ def get_price_tier(product_id: int, quantity: int) -> dict | None:
             (product_id, quantity, quantity),
         )
         row = cursor.fetchone()
-        return dict(row) if row else None
+        result = dict(row) if row else None
+        _price_tier_cache[cache_key] = result
+        return result
 
 
 def get_stock(variant_id: int) -> dict | None:
@@ -192,6 +217,9 @@ def get_stock_by_product(product_id: int) -> list[dict]:
 
 
 def get_discount(code: str) -> dict | None:
+    if code in _discount_cache:
+        return _discount_cache[code]
+
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -199,7 +227,9 @@ def get_discount(code: str) -> dict | None:
             (code, date.today().isoformat()),
         )
         row = cursor.fetchone()
-        return dict(row) if row else None
+        result = dict(row) if row else None
+        _discount_cache[code] = result
+        return result
 
 
 def create_session(session_id: str, customer_name: str) -> dict:
