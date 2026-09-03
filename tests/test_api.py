@@ -21,3 +21,29 @@ class TestChat:
         assert response.status_code == 200
         assert "response" in response.json()
         assert "session_id" in response.json()
+
+
+class TestInputValidation:
+    def test_chat_empty_message(self, client):
+        response = client.post("/chat", json={"message": ""})
+        assert response.status_code == 422
+
+    def test_chat_missing_message(self, client):
+        response = client.post("/chat", json={})
+        assert response.status_code == 422
+
+    def test_chat_message_too_long(self, client):
+        response = client.post("/chat", json={"message": "x" * 2001})
+        assert response.status_code == 422
+
+    def test_chat_invalid_session_id_format(self, client):
+        response = client.post("/chat", json={"message": "test", "session_id": "invalid!"})
+        assert response.status_code == 422
+
+    def test_get_session_not_found(self, client):
+        response = client.get("/session/nonexistent-uuid")
+        assert response.status_code == 404
+
+    def test_chat_wrong_content_type(self, client):
+        response = client.post("/chat", content="not json", headers={"Content-Type": "text/plain"})
+        assert response.status_code == 422
