@@ -39,9 +39,11 @@ app = FastAPI(
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 
+ALLOWED_ORIGINS = settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,7 +57,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content=ErrorResponse(
             error="Terjadi kesalahan internal server",
-            detail=str(exc)
+            detail="Silakan coba lagi atau hubungi admin."
         ).model_dump()
     )
 

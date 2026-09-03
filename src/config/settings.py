@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     CHROMADB_PATH: str = "data/chromadb"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
-    
+    ALLOWED_ORIGINS: str = ""  # Comma-separated origins, empty = allow all
+
     # Langfuse (Agent Observability)
     LANGFUSE_PUBLIC_KEY: str = ""
     LANGFUSE_SECRET_KEY: str = ""
