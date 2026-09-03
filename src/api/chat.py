@@ -4,7 +4,7 @@ import asyncio
 from fastapi import APIRouter, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, trim_messages
 from src.agents.graph import create_sales_agent
 from src.data.database import create_session, get_conversation_history, save_message
 from src.api.models import ChatRequest, ChatResponse
@@ -35,6 +35,14 @@ async def chat_endpoint(request: Request, req: ChatRequest):
             messages.append(AIMessage(content=msg["content"]))
 
     messages.append(HumanMessage(content=req.message))
+
+    messages = trim_messages(
+        messages,
+        max_tokens=8000,
+        token_counter=len,
+        strategy="last",
+        start_on="human",
+    )
 
     result = await asyncio.to_thread(
         agent.invoke,

@@ -220,14 +220,15 @@ def save_message(session_id: str, role: str, content: str, tool_calls: str | Non
         conn.commit()
 
 
-def get_conversation_history(session_id: str) -> list[dict]:
+def get_conversation_history(session_id: str, max_messages: int = 50) -> list[dict]:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM conversations WHERE session_id = ? ORDER BY timestamp",
-            (session_id,),
+            "SELECT * FROM conversations WHERE session_id = ? ORDER BY timestamp DESC LIMIT ?",
+            (session_id, max_messages),
         )
         results = [dict(row) for row in cursor.fetchall()]
+        results.reverse()
         return results
 
 
