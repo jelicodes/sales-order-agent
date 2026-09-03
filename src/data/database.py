@@ -101,6 +101,14 @@ def init_db() -> None:
                 status TEXT DEFAULT 'pending',
                 FOREIGN KEY (session_id) REFERENCES sessions(id)
             );
+
+            CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+            CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
+            CREATE INDEX IF NOT EXISTS idx_product_variants_product_id ON product_variants(product_id);
+            CREATE INDEX IF NOT EXISTS idx_price_tiers_product_id ON price_tiers(product_id);
+            CREATE INDEX IF NOT EXISTS idx_stock_variant_id ON stock(variant_id);
+            CREATE INDEX IF NOT EXISTS idx_conversations_session_ts ON conversations(session_id, timestamp DESC);
+            CREATE INDEX IF NOT EXISTS idx_discounts_code ON discounts(code);
         """)
         conn.commit()
 
