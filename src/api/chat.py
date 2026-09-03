@@ -2,8 +2,6 @@ import uuid
 import logging
 import asyncio
 from fastapi import APIRouter, Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from langchain_core.messages import HumanMessage, AIMessage, trim_messages
 from src.agents.graph import create_sales_agent
 from src.data.database import create_session, get_conversation_history, save_message
@@ -12,21 +10,21 @@ from src.api.models import ChatRequest, ChatResponse
 router = APIRouter()
 agent = create_sales_agent()
 logger = logging.getLogger(__name__)
-limiter = Limiter(key_func=get_remote_address)
+
 
 @router.post("/chat", response_model=ChatResponse)
-@limiter.limit("10/minute")
 async def chat_endpoint(request: Request, req: ChatRequest):
+    limiter = request.app.state.limiter
     request_id = str(uuid.uuid4())
     logger.info(f"[{request_id}] Chat request received: session={req.session_id}")
-    
+
     session_id = req.session_id
     if not session_id:
         session_id = str(uuid.uuid4())
-        create_session(session_id, req.customer_name)
+        await asyncio.to_thread(create_session, session_id, req.customer_name)
         logger.info(f"[{request_id}] New session created: {session_id}")
 
-    history = get_conversation_history(session_id)
+    history = await asyncio.to_thread(get_conversation_history, session_id)
     messages = []
     for msg in history:
         if msg["role"] == "user":
@@ -53,10 +51,10 @@ async def chat_endpoint(request: Request, req: ChatRequest):
         }
     )
 
-    save_message(session_id, "user", req.message)
+    await asyncio.to_thread(save_message, session_id, "user", req.message)
     response_content = result["messages"][-1].content
-    save_message(session_id, "assistant", response_content)
-    
+    await asyncio.to_thread(save_message, session_id, "assistant", response_content)
+
     logger.info(f"[{request_id}] Response sent successfully")
 
     return ChatResponse(

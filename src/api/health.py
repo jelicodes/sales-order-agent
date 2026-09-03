@@ -1,4 +1,5 @@
 import sqlite3
+import asyncio
 from pathlib import Path
 from fastapi import APIRouter
 from src.config.settings import settings, APP_VERSION
@@ -8,7 +9,7 @@ from src.api.models import HealthResponse, HealthCheckResult
 router = APIRouter()
 
 
-def check_database() -> dict:
+def check_database_sync() -> dict:
     try:
         db_path = Path(settings.DATABASE_PATH)
         if not db_path.exists():
@@ -51,15 +52,15 @@ def check_langfuse() -> dict:
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
-    db_status = check_database()
+    db_status = await asyncio.to_thread(check_database_sync)
     chromadb_status = check_chromadb()
     groq_status = check_groq()
     langfuse_status = check_langfuse()
-    
+
     overall_status = "ok"
     if db_status["status"] == "error" or groq_status["status"] == "error":
         overall_status = "degraded"
-    
+
     return HealthResponse(
         status=overall_status,
         service="sales-order-agent",
