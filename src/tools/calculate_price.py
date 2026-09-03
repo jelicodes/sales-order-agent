@@ -29,11 +29,15 @@ def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> 
     if discount_code:
         discount = get_discount(discount_code)
         if discount:
-            if discount["type"] == "percentage":
-                discount_amount = subtotal * (discount["value"] / 100)
+            # Validate min_qty requirement
+            if discount.get("min_qty") and quantity < discount["min_qty"]:
+                discount = None  # Don't apply discount if min_qty not met
             else:
-                discount_amount = min(discount["value"], subtotal)
-            discount_info = {"code": discount["code"], "type": discount["type"], "value": discount["value"]}
+                if discount["type"] == "percentage":
+                    discount_amount = subtotal * (discount["value"] / 100)
+                else:
+                    discount_amount = min(discount["value"], subtotal)
+                discount_info = {"code": discount["code"], "type": discount["type"], "value": discount["value"]}
     total = subtotal - discount_amount
     return {
         "product_id": product_id, "quantity": quantity,

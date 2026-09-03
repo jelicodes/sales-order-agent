@@ -81,16 +81,16 @@ class TestCalculatePriceExtended:
         result = calculate_price.invoke({"product_id": 9999, "quantity": 100})
         assert "error" in result
 
-    def test_discount_min_qty_not_enforced(self):
-        """Current behavior: discount applies regardless of min_qty.
-        This documents the existing behavior for future reference."""
+    def test_discount_min_qty_validates_correctly(self):
+        """Discount with quantity below minimum should not apply."""
         result = calculate_price.invoke({
             "product_id": 1,
             "quantity": 50,
             "discount_code": "BULK500"
         })
-        # BULK500 has min_qty 500, but currently applies anyway
-        assert result["discount"] is not None
+        # BULK500 has min_qty 500, so discount should NOT apply for qty 50
+        assert result["discount"] is None
+        assert result["discount_amount"] == 0
 
 
 class TestCreateQuoteExtended:

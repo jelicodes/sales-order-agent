@@ -332,9 +332,8 @@ class TestEdgeCases:
         assert isinstance(results, list)
 
     def test_discount_min_qty_not_met(self):
-        """Discount with quantity below minimum"""
+        """Discount with quantity below minimum should not apply."""
         result = calculate_price.invoke({"product_id": 1, "quantity": 50, "discount_code": "BULK500"})
-        # BULK500 requires min_qty 500, so discount shouldn't apply
-        # But the tool doesn't check min_qty for discounts currently
-        # This documents current behavior
-        assert result["discount"] is not None  # Current behavior: discount applies regardless
+        # BULK500 requires min_qty 500, so discount should NOT apply
+        assert result["discount"] is None
+        assert result["discount_amount"] == 0
