@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 from fastapi import APIRouter
-from src.config.settings import settings
+from src.config.settings import settings, APP_VERSION
 from src.config.langfuse import get_langfuse_handler
 from src.api.models import HealthResponse, HealthCheckResult
 
@@ -63,7 +63,7 @@ async def health_check():
     return HealthResponse(
         status=overall_status,
         service="sales-order-agent",
-        version="0.1.0",
+        version=APP_VERSION,
         checks={
             "database": HealthCheckResult(**db_status),
             "chromadb": HealthCheckResult(**chromadb_status),

@@ -12,6 +12,7 @@ from src.api.session import router as session_router
 from src.api.chat import router as chat_router
 from src.api.models import ErrorResponse
 from src.config.langfuse import init_langfuse, shutdown_langfuse
+from src.config.settings import settings, APP_VERSION
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,7 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Sales Order Agent - PT Lemone",
     description="AI Agent untuk membantu proses order fashion grosir B2B",
-    version="0.1.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -74,5 +75,5 @@ app.include_router(chat_router)
 
 if __name__ == "__main__":
     import uvicorn
-    from src.config.settings import settings
+    from src.config.settings import settings, APP_VERSION
     uvicorn.run("src.main:app", host=settings.APP_HOST, port=settings.APP_PORT, reload=True)
