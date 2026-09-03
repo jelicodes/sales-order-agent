@@ -14,4 +14,5 @@ Task 9: complete (commits 59da588, concern: 1 pre-existing test failure)
 Task 10: complete (commits d64187b, review clean)
 Task 11: complete (no changes needed, already correct)
 Task 12: complete (commits 4e749c8, review clean)
+Task 13: complete (commit e4bbe34, 86/87 tests passing, 1 pre-existing expected failure, all syntax clean, pushed to GitHub)
 
