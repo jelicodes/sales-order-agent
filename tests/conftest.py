@@ -19,6 +19,8 @@ def session_id(client):
 @pytest.fixture
 def mock_llm():
     """Fixture to mock LLM with scripted responses."""
+    agents = []
+
     def _make_agent(responses):
         """
         Create agent with mocked LLM.
@@ -26,10 +28,16 @@ def mock_llm():
         Args:
             responses: List of AIMessage objects the mock LLM will return in sequence.
         """
-        with patch("src.agents.nodes.create_llm") as mock_create:
-            mock_instance = MagicMock()
-            mock_instance.invoke.side_effect = responses
-            mock_create.return_value = mock_instance
-            agent = create_sales_agent()
-            yield agent
-    return _make_agent
+        patcher = patch("src.agents.nodes.create_llm")
+        mock_create = patcher.start()
+        mock_instance = MagicMock()
+        mock_instance.invoke.side_effect = responses
+        mock_create.return_value = mock_instance
+        agent = create_sales_agent()
+        agents.append((patcher, agent))
+        return agent
+
+    yield _make_agent
+
+    for patcher, _ in agents:
+        patcher.stop()
