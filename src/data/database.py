@@ -20,10 +20,14 @@ def _get_db_path() -> str:
 
 @contextmanager
 def get_connection():
-    conn = sqlite3.connect(_get_db_path())
+    conn = sqlite3.connect(_get_db_path(), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -110,7 +114,6 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_conversations_session_ts ON conversations(session_id, timestamp DESC);
             CREATE INDEX IF NOT EXISTS idx_discounts_code ON discounts(code);
         """)
-        conn.commit()
 
 
 def search_products(query: str, category: str | None = None) -> list[dict]:
@@ -206,7 +209,6 @@ def create_session(session_id: str, customer_name: str) -> dict:
             "INSERT INTO sessions (id, customer_name) VALUES (?, ?)",
             (session_id, customer_name),
         )
-        conn.commit()
         return {"id": session_id, "customer_name": customer_name, "status": "active"}
 
 
@@ -225,7 +227,6 @@ def save_message(session_id: str, role: str, content: str, tool_calls: str | Non
             "INSERT INTO conversations (session_id, role, content, tool_calls) VALUES (?, ?, ?, ?)",
             (session_id, role, content, tool_calls),
         )
-        conn.commit()
 
 
 def get_conversation_history(session_id: str, max_messages: int = 50) -> list[dict]:
@@ -247,7 +248,6 @@ def create_quote(quote_id: str, session_id: str, items_json: str, total_price: f
             "INSERT INTO quotes (id, session_id, items_json, total_price, valid_until) VALUES (?, ?, ?, ?, ?)",
             (quote_id, session_id, items_json, total_price, valid_until),
         )
-        conn.commit()
         return {
             "id": quote_id,
             "session_id": session_id,
