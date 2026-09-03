@@ -10,6 +10,7 @@ from src.data.database import init_db
 from src.api.health import router as health_router
 from src.api.session import router as session_router
 from src.api.chat import router as chat_router
+from src.api.models import ErrorResponse
 from src.config.langfuse import init_langfuse, shutdown_langfuse
 
 logging.basicConfig(
@@ -51,11 +52,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={
-            "success": False,
-            "error": "Terjadi kesalahan internal server",
-            "detail": str(exc)
-        }
+        content=ErrorResponse(
+            error="Terjadi kesalahan internal server",
+            detail=str(exc)
+        ).model_dump()
     )
 
 

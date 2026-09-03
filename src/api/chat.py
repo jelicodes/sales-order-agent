@@ -1,24 +1,19 @@
 import uuid
 import logging
 from fastapi import APIRouter, Request
-from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from langchain_core.messages import HumanMessage, AIMessage
 from src.agents.graph import create_sales_agent
 from src.data.database import create_session, get_conversation_history, save_message
+from src.api.models import ChatRequest, ChatResponse
 
 router = APIRouter()
 agent = create_sales_agent()
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
-class ChatRequest(BaseModel):
-    message: str
-    session_id: str = ""
-    customer_name: str = ""
-
-@router.post("/chat")
+@router.post("/chat", response_model=ChatResponse)
 @limiter.limit("10/minute")
 async def chat_endpoint(request: Request, req: ChatRequest):
     request_id = str(uuid.uuid4())
@@ -52,8 +47,8 @@ async def chat_endpoint(request: Request, req: ChatRequest):
     
     logger.info(f"[{request_id}] Response sent successfully")
 
-    return {
-        "response": response_content,
-        "session_id": session_id,
-        "request_id": request_id,
-    }
+    return ChatResponse(
+        response=response_content,
+        session_id=session_id,
+        request_id=request_id,
+    )

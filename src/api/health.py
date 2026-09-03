@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter
 from src.config.settings import settings
 from src.config.langfuse import get_langfuse_handler
+from src.api.models import HealthResponse, HealthCheckResult
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ def check_langfuse() -> dict:
     return {"status": "disabled", "enabled": False}
 
 
-@router.get("/health")
+@router.get("/health", response_model=HealthResponse)
 async def health_check():
     db_status = check_database()
     chromadb_status = check_chromadb()
@@ -59,14 +60,14 @@ async def health_check():
     if db_status["status"] == "error" or groq_status["status"] == "error":
         overall_status = "degraded"
     
-    return {
-        "status": overall_status,
-        "service": "sales-order-agent",
-        "version": "0.1.0",
-        "checks": {
-            "database": db_status,
-            "chromadb": chromadb_status,
-            "groq": groq_status,
-            "langfuse": langfuse_status,
+    return HealthResponse(
+        status=overall_status,
+        service="sales-order-agent",
+        version="0.1.0",
+        checks={
+            "database": HealthCheckResult(**db_status),
+            "chromadb": HealthCheckResult(**chromadb_status),
+            "groq": HealthCheckResult(**groq_status),
+            "langfuse": HealthCheckResult(**langfuse_status),
         }
-    }
+    )
