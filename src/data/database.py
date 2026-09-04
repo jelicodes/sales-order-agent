@@ -119,6 +119,45 @@ def init_db() -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(id)
             );
 
+            CREATE TABLE IF NOT EXISTS customers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT,
+                email TEXT,
+                tier TEXT DEFAULT 'regular',
+                created_at TEXT NOT NULL,
+                last_order_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS orders (
+                id TEXT PRIMARY KEY,
+                customer_id TEXT NOT NULL,
+                items TEXT NOT NULL,
+                subtotal INTEGER NOT NULL,
+                discount_amount INTEGER DEFAULT 0,
+                total_price INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                shipping_address TEXT,
+                payment_status TEXT DEFAULT 'unpaid',
+                payment_terms INTEGER DEFAULT 0,
+                notes TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (customer_id) REFERENCES customers(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS order_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id TEXT NOT NULL,
+                product_id INTEGER NOT NULL,
+                product_name TEXT NOT NULL,
+                qty INTEGER NOT NULL,
+                price_per_unit INTEGER NOT NULL,
+                subtotal INTEGER NOT NULL,
+                FOREIGN KEY (order_id) REFERENCES orders(id),
+                FOREIGN KEY (product_id) REFERENCES products(id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
             CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
             CREATE INDEX IF NOT EXISTS idx_product_variants_product_id ON product_variants(product_id);
@@ -126,6 +165,9 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_stock_variant_id ON stock(variant_id);
             CREATE INDEX IF NOT EXISTS idx_conversations_session_ts ON conversations(session_id, timestamp DESC);
             CREATE INDEX IF NOT EXISTS idx_discounts_code ON discounts(code);
+            CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
+            CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+            CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
         """)
 
 
@@ -286,3 +328,104 @@ def create_quote(quote_id: str, session_id: str, items_json: str, total_price: f
             "valid_until": valid_until,
             "status": "pending",
         }
+
+
+import uuid
+import json
+from datetime import datetime
+
+
+def create_customer(name: str, phone: str | None = None, email: str | None = None, tier: str = "regular") -> dict:
+    customer_id = f"CUST-{uuid.uuid4().hex[:8].upper()}"
+    now = datetime.now().isoformat()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO customers (id, name, phone, email, tier, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (customer_id, name, phone, email, tier, now),
+        )
+        return {"id": customer_id, "name": name, "phone": phone, "email": email, "tier": tier, "created_at": now}
+
+
+def get_customer_by_id(customer_id: str) -> dict | None:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM customers WHERE id = ?", (customer_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
+def get_customer_by_phone(phone: str) -> dict | None:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM customers WHERE phone = ?", (phone,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
+def create_order(customer_id: str, items: list[dict], subtotal: int, discount_amount: int, total_price: int, shipping_address: str | None = None, notes: str | None = None) -> dict:
+    order_id = f"ORD-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+    now = datetime.now().isoformat()
+    items_json = json.dumps(items)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO orders (id, customer_id, items, subtotal, discount_amount, total_price, status, shipping_address, notes, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)""",
+            (order_id, customer_id, items_json, subtotal, discount_amount, total_price, shipping_address, notes, now, now),
+        )
+        for item in items:
+            cursor.execute(
+                """INSERT INTO order_items (order_id, product_id, product_name, qty, price_per_unit, subtotal)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (order_id, item["product_id"], item["product_name"], item["qty"], item["price_per_unit"], item["subtotal"]),
+            )
+        cursor.execute("UPDATE customers SET last_order_at = ? WHERE id = ?", (now, customer_id))
+        return {"id": order_id, "customer_id": customer_id, "total_price": total_price, "status": "pending", "created_at": now}
+
+
+def get_order_by_id(order_id: str) -> dict | None:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
+        row = cursor.fetchone()
+        if row:
+            order = dict(row)
+            cursor.execute("SELECT * FROM order_items WHERE order_id = ?", (order_id,))
+            order["items"] = [dict(item) for item in cursor.fetchall()]
+            return order
+        return None
+
+
+def get_orders_by_customer(customer_id: str, limit: int = 10) -> list[dict]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC LIMIT ?",
+            (customer_id, limit),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+
+def update_order_status(order_id: str, status: str) -> bool:
+    valid_transitions = {
+        "pending": ["confirmed", "cancelled"],
+        "confirmed": ["processing", "cancelled"],
+        "processing": ["shipped"],
+        "shipped": ["delivered"],
+    }
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM orders WHERE id = ?", (order_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        current_status = row["status"]
+        if status not in valid_transitions.get(current_status, []):
+            return False
+        now = datetime.now().isoformat()
+        cursor.execute(
+            "UPDATE orders SET status = ?, updated_at = ? WHERE id = ?",
+            (status, now, order_id),
+        )
+        return True
