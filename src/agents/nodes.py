@@ -9,10 +9,19 @@ from src.tools.check_stock import check_stock
 from src.tools.calculate_price import calculate_price
 from src.tools.create_quote import create_quote
 from src.tools.get_alternatives import get_alternatives
+from src.tools.create_order import create_order
+from src.tools.cancel_order import cancel_order
+from src.tools.get_customer import get_customer
+from src.tools.check_order_status import check_order_status
+from src.tools.get_order_history import get_order_history
 from src.config.settings import settings
 from src.config.langfuse import get_langfuse_handler
 
-tools = [search_products, get_product_detail, check_stock, calculate_price, create_quote, get_alternatives]
+tools = [
+    search_products, get_product_detail, check_stock, calculate_price,
+    create_quote, get_alternatives,
+    create_order, cancel_order, get_customer, check_order_status, get_order_history,
+]
 
 _llm_instance = None
 
