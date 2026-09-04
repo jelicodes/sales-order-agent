@@ -137,7 +137,7 @@ class TestLangfuseMetadata:
 
 
 class TestGroqRateLimit:
-    def test_rate_limit_returns_503(self, client):
+    def test_rate_limit_returns_friendly_message(self, client):
         with patch("src.agents.nodes.get_llm") as mock_get_llm:
             from groq import RateLimitError as GroqRateLimitError
             mock_instance = MagicMock()
@@ -148,8 +148,8 @@ class TestGroqRateLimit:
             )
             mock_get_llm.return_value = mock_instance
             response = client.post("/chat", json={"message": "test"})
-            assert response.status_code == 503
-            assert "sibuk" in response.json()["error"]
+            assert response.status_code == 200
+            assert "sibuk" in response.json()["response"]
 
 
 class TestMultiTurn:
