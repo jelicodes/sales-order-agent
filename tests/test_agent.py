@@ -1,7 +1,8 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from langchain_core.messages import AIMessage
 from src.agents.graph import create_sales_agent
+from src.agents.nodes import llm_node
 
 
 class TestAgentCreation:
@@ -96,3 +97,53 @@ class TestAgentFlow:
             "context": {},
         })
         assert result2 is not None
+
+
+class TestLangfuseMetadata:
+    def test_metadata_includes_session_id(self):
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = AIMessage(content="OK", tool_calls=[])
+        state = {
+            "messages": [("user", "test")],
+            "session_id": "sess-123",
+            "context": {"request_id": "req-456"},
+        }
+        with patch("src.agents.nodes.get_llm", return_value=mock_llm):
+            with patch("src.agents.nodes.get_langfuse_handler", return_value=MagicMock()):
+                llm_node(state)
+                call_args = mock_llm.invoke.call_args
+                config = call_args[1].get("config", call_args[1])
+                assert "metadata" in config
+                assert config["metadata"]["session_id"] == "sess-123"
+                assert config["metadata"]["request_id"] == "req-456"
+
+    def test_metadata_absent_when_no_session(self):
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = AIMessage(content="OK", tool_calls=[])
+        state = {
+            "messages": [("user", "test")],
+            "session_id": "",
+            "context": {},
+        }
+        with patch("src.agents.nodes.get_llm", return_value=mock_llm):
+            with patch("src.agents.nodes.get_langfuse_handler", return_value=MagicMock()):
+                llm_node(state)
+                call_args = mock_llm.invoke.call_args
+                config = call_args[1].get("config", call_args[1])
+                assert "metadata" not in config or config.get("metadata") == {}
+
+
+class TestGroqRateLimit:
+    def test_rate_limit_returns_503(self, client):
+        with patch("src.agents.nodes.get_llm") as mock_get_llm:
+            from groq import RateLimitError as GroqRateLimitError
+            mock_instance = MagicMock()
+            mock_instance.invoke.side_effect = GroqRateLimitError(
+                message="Rate limit exceeded",
+                response=MagicMock(status_code=429),
+                body={"error": {"message": "Rate limit reached"}}
+            )
+            mock_get_llm.return_value = mock_instance
+            response = client.post("/chat", json={"message": "test"})
+            assert response.status_code == 503
+            assert "sibuk" in response.json()["error"]

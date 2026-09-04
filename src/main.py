@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from groq import RateLimitError as GroqRateLimitError
 from langgraph.checkpoint.sqlite import SqliteSaver
 from src.data.database import init_db
 from src.api.health import router as health_router
@@ -76,6 +77,19 @@ async def rate_limit_handler(request, exc):
     return JSONResponse(
         status_code=429,
         content={"success": False, "error": "Terlalu banyak request. Silakan coba lagi nanti."}
+    )
+
+
+@app.exception_handler(GroqRateLimitError)
+async def groq_rate_limit_handler(request, exc):
+    logger.warning(f"Groq API rate limit exceeded: {exc}")
+    return JSONResponse(
+        status_code=503,
+        content={
+            "success": False,
+            "error": "Layanan AI sedang sibuk. Silakan coba lagi dalam beberapa menit.",
+            "detail": "Rate limit API LLM terlampaui."
+        }
     )
 
 

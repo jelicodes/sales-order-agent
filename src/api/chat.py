@@ -2,7 +2,7 @@ import uuid
 import logging
 import asyncio
 from fastapi import APIRouter, Request
-from langchain_core.messages import HumanMessage, AIMessage, trim_messages
+from langchain_core.messages import HumanMessage, trim_messages
 from src.agents.graph import create_sales_agent
 from src.api.models import ChatRequest, ChatResponse
 
@@ -40,7 +40,6 @@ async def chat_endpoint(request: Request, req: ChatRequest):
         },
         config,
     )
-
     response_content = result["messages"][-1].content
     logger.info(f"[{request_id}] Response sent successfully")
 

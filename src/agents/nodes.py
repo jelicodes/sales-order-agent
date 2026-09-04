@@ -1,4 +1,3 @@
-from typing import Optional
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_groq import ChatGroq
 from langgraph.prebuilt import ToolNode
@@ -46,7 +45,14 @@ def llm_node(state: AgentState) -> dict:
         messages = [SystemMessage(content=SALES_AGENT_PROMPT)] + messages
 
     langfuse_handler = get_langfuse_handler()
+    metadata = {}
+    if state.get("session_id"):
+        metadata["session_id"] = state["session_id"]
+    if state.get("context", {}).get("request_id"):
+        metadata["request_id"] = state["context"]["request_id"]
     config = {"callbacks": [langfuse_handler]} if langfuse_handler else {}
+    if metadata:
+        config["metadata"] = metadata
     response = llm.invoke(messages, config=config)
     return {"messages": [response]}
 

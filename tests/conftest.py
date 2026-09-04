@@ -29,11 +29,11 @@ def mock_llm():
         Args:
             responses: List of AIMessage objects the mock LLM will return in sequence.
         """
-        patcher = patch("src.agents.nodes.create_llm")
-        mock_create = patcher.start()
+        patcher = patch("src.agents.nodes.get_llm")
+        mock_get_llm = patcher.start()
         mock_instance = MagicMock()
         mock_instance.invoke.side_effect = responses
-        mock_create.return_value = mock_instance
+        mock_get_llm.return_value = mock_instance
         agent = create_sales_agent()
         agents.append((patcher, agent))
         return agent
