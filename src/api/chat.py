@@ -3,6 +3,7 @@ import logging
 import asyncio
 from fastapi import APIRouter, Request
 from langchain_core.messages import HumanMessage, trim_messages
+from langgraph.types import Command
 from src.agents.graph import create_sales_agent
 from src.api.models import ChatRequest, ChatResponse
 
@@ -20,26 +21,37 @@ async def chat_endpoint(request: Request, req: ChatRequest):
     session_id = req.session_id or str(uuid.uuid4())
     agent = create_sales_agent(checkpointer=checkpointer)
 
-    messages = [HumanMessage(content=req.message)]
+    # Handle resume from interrupt
+    if req.message.upper() == "YA" or req.message.upper() == "BATAL":
+        config = {"configurable": {"thread_id": session_id}}
+        result = await asyncio.to_thread(
+            agent.invoke,
+            Command(resume=req.message),
+            config,
+        )
+    else:
+        messages = [HumanMessage(content=req.message)]
+        messages = trim_messages(
+            messages,
+            max_tokens=8000,
+            token_counter=len,
+            strategy="last",
+            start_on="human",
+        )
+        config = {"configurable": {"thread_id": session_id}}
+        result = await asyncio.to_thread(
+            agent.invoke,
+            {
+                "messages": messages,
+                "session_id": session_id,
+                "context": {"request_id": request_id},
+                "customer_id": None,
+                "pending_order": None,
+                "confirmation_status": None,
+            },
+            config,
+        )
 
-    messages = trim_messages(
-        messages,
-        max_tokens=8000,
-        token_counter=len,
-        strategy="last",
-        start_on="human",
-    )
-
-    config = {"configurable": {"thread_id": session_id}}
-    result = await asyncio.to_thread(
-        agent.invoke,
-        {
-            "messages": messages,
-            "session_id": session_id,
-            "context": {"request_id": request_id},
-        },
-        config,
-    )
     response_content = result["messages"][-1].content
     logger.info(f"[{request_id}] Response sent successfully")
 
