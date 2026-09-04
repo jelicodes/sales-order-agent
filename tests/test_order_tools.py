@@ -27,8 +27,9 @@ class TestCreateOrderTool:
         customer = create_customer(name="Toko Test")
         items = '[{"product_id": 1, "product_name": "Polo Navy", "qty": 100, "price_per_unit": 70000}]'
         result = create_order.invoke({"customer_id": customer["id"], "items_json": items})
-        assert "berhasil" in result
-        assert "ORD-" in result
+        assert "ORDER_PENDING" in result
+        assert "CUST-" in result
+        assert "7000000" in result
 
     def test_create_order_invalid_json(self):
         from src.tools.create_order import create_order

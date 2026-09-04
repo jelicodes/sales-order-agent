@@ -1,11 +1,10 @@
 import json
 from langchain_core.tools import tool
-from src.data.database import create_order as db_create_order
 
 
 @tool
 def create_order(customer_id: str, items_json: str, shipping_address: str | None = None, notes: str | None = None) -> str:
-    """Buat order baru. items_json adalah JSON array dengan format: [{"product_id": int, "product_name": str, "qty": int, "price_per_unit": int}]. Shipping address dan notes opsional."""
+    """Siapkan order baru untuk konfirmasi. items_json adalah JSON array dengan format: [{"product_id": int, "product_name": str, "qty": int, "price_per_unit": int}]. Shipping address dan notes opsional. Order akan dibuat setelah customer konfirmasi YA."""
     try:
         items = json.loads(items_json)
     except json.JSONDecodeError:
@@ -21,13 +20,13 @@ def create_order(customer_id: str, items_json: str, shipping_address: str | None
         item["subtotal"] = item["qty"] * item["price_per_unit"]
         subtotal += item["subtotal"]
 
-    order = db_create_order(
-        customer_id=customer_id,
-        items=items,
-        subtotal=subtotal,
-        discount_amount=0,
-        total_price=subtotal,
-        shipping_address=shipping_address,
-        notes=notes,
-    )
-    return f"Order berhasil dibuat! Order ID: {order['id']}, Total: Rp {order['total_price']:,}, Status: {order['status']}"
+    order_data = json.dumps({
+        "customer_id": customer_id,
+        "items": items,
+        "subtotal": subtotal,
+        "total_price": subtotal,
+        "shipping_address": shipping_address,
+        "notes": notes,
+        "pending_confirmation": True,
+    })
+    return f"ORDER_PENDING|{order_data}"
