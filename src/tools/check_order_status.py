@@ -1,11 +1,13 @@
 from langchain_core.tools import tool
-from src.data.database import get_order_by_id
+from src.data.repos.order_repo import OrderRepo
+
+_order_repo = OrderRepo()
 
 
 @tool
 def check_order_status(order_id: str) -> str:
     """Cek status order berdasarkan order_id."""
-    order = get_order_by_id(order_id)
+    order = _order_repo.get_by_id(order_id)
     if not order:
         return f"Order {order_id} tidak ditemukan"
 

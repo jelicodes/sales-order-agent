@@ -8,8 +8,10 @@ from src.main import app
 @pytest.fixture
 def client():
     """TestClient with mocked agent."""
-    with patch("src.api.chat.agent") as mock_agent:
-        def side_effect(input_state):
+    with patch("src.api.chat.create_sales_agent") as mock_create:
+        mock_agent = MagicMock()
+
+        def side_effect(input_state, config=None):
             msgs = input_state["messages"]
             last_user_msg = msgs[-1].content if msgs else ""
 
@@ -48,6 +50,7 @@ def client():
             }
 
         mock_agent.invoke.side_effect = side_effect
+        mock_create.return_value = mock_agent
 
         with TestClient(app) as c:
             yield c

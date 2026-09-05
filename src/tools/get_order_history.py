@@ -1,11 +1,13 @@
 from langchain_core.tools import tool
-from src.data.database import get_orders_by_customer
+from src.data.repos.order_repo import OrderRepo
+
+_order_repo = OrderRepo()
 
 
 @tool
 def get_order_history(customer_id: str, limit: int = 5) -> str:
     """Lihat riwayat order customer. Default menampilkan 5 order terakhir."""
-    orders = get_orders_by_customer(customer_id, limit)
+    orders = _order_repo.get_by_customer(customer_id, limit)
     if not orders:
         return f"Tidak ada riwayat order untuk customer {customer_id}"
 

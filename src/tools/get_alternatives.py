@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
-from src.data.database import get_product_by_id, search_products
+from src.data.repos.product_repo import ProductRepo
+
+_product_repo = ProductRepo()
 
 
 class GetAlternativesInput(BaseModel):
@@ -11,12 +13,12 @@ class GetAlternativesInput(BaseModel):
 @tool(args_schema=GetAlternativesInput)
 def get_alternatives(product_id: int, reason: str) -> list[dict]:
     """Cari produk alternatif. reason: 'stock' (stok tidak cukup) atau 'budget' (budget tidak sesuai)."""
-    original = get_product_by_id(product_id)
+    original = _product_repo.get_by_id(product_id)
     if not original:
         return []
     category = original["category"]
     base_price = original["base_price"]
-    candidates = search_products("", category)
+    candidates = _product_repo.search("", category)
     alternatives = []
     for c in candidates:
         if c["id"] == product_id:

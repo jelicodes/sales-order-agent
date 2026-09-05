@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
-from src.data.database import get_stock_by_product
+from src.data.repos.product_repo import ProductRepo
+
+_product_repo = ProductRepo()
 
 
 class CheckStockInput(BaseModel):
@@ -11,7 +13,7 @@ class CheckStockInput(BaseModel):
 @tool(args_schema=CheckStockInput)
 def check_stock(product_id: int, quantity: int) -> dict:
     """Cek ketersediaan stok produk. Masukkan product_id dan jumlah yang dibutuhkan."""
-    variants = get_stock_by_product(product_id)
+    variants = _product_repo.get_stock_by_product(product_id)
     if not variants:
         return {"available": False, "stock": 0, "message": "Produk tidak ditemukan"}
     total_stock = sum(v["quantity"] for v in variants)

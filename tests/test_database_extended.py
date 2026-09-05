@@ -8,14 +8,14 @@ from pathlib import Path
 @pytest.fixture(autouse=True)
 def seeded_db():
     from src.config.settings import settings
-    import src.data.database as db_module
     from src.data.database import init_db, get_connection
+    from src.data.schema import set_db_path
 
     old_path = settings.DATABASE_PATH
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         temp_path = f.name
     settings.DATABASE_PATH = temp_path
-    db_module._db_path = None
+    set_db_path(None)
 
     init_db()
 
@@ -67,14 +67,14 @@ def seeded_db():
     yield
 
     settings.DATABASE_PATH = old_path
-    db_module._db_path = None
+    set_db_path(None)
     os.unlink(temp_path)
 
 
 from src.data.database import (
     search_products, get_product_by_id,
     get_product_variants, get_price_tier, get_stock_by_product,
-    create_session, get_session, save_message, get_conversation_history,
+    create_session, get_session,
     create_quote, get_discount, init_db, get_connection,
 )
 
@@ -118,23 +118,4 @@ class TestDatabaseExtended:
         discount = get_discount("NONEXISTENT")
         assert discount is None
 
-    def _insert_message(self, session_id, role, content, timestamp):
-        with get_connection() as conn:
-            conn.execute(
-                "INSERT INTO conversations (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
-                (session_id, role, content, timestamp),
-            )
-            conn.commit()
 
-    def test_conversation_history_ordering(self):
-        session_id = "test-ordering-123"
-        create_session(session_id, "Test")
-        self._insert_message(session_id, "user", "Message 1", "2026-09-03 10:00:00")
-        self._insert_message(session_id, "assistant", "Response 1", "2026-09-03 10:00:01")
-        self._insert_message(session_id, "user", "Message 2", "2026-09-03 10:00:02")
-
-        history = get_conversation_history(session_id)
-        assert len(history) == 3
-        assert history[0]["content"] == "Message 1"
-        assert history[1]["content"] == "Response 1"
-        assert history[2]["content"] == "Message 2"

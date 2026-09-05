@@ -1,7 +1,9 @@
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 from src.data.vector_store import search_products_semantic
-from src.data.database import search_products as db_search
+from src.data.repos.product_repo import ProductRepo
+
+_product_repo = ProductRepo()
 
 
 class SearchProductsInput(BaseModel):
@@ -16,4 +18,4 @@ def search_products(query: str, category: str = "") -> list[dict]:
         results = search_products_semantic(query, n_results=5)
         if results:
             return results
-    return db_search(query if query else "", category if category else None)
+    return _product_repo.search(query if query else "", category if category else None)

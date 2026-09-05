@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
-from src.data.database import get_price_tier, get_discount
+from src.data.repos.product_repo import ProductRepo
+
+_product_repo = ProductRepo()
 
 
 class CalculatePriceInput(BaseModel):
@@ -19,7 +21,7 @@ def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> 
             "discount": None, "discount_amount": 0,
             "total": 0, "tier": "N/A"
         }
-    tier = get_price_tier(product_id, quantity)
+    tier = _product_repo.get_price_tier(product_id, quantity)
     if not tier:
         return {"error": "Tidak ada harga tersedia untuk quantity ini"}
     price_per_unit = tier["price_per_unit"]
@@ -27,11 +29,10 @@ def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> 
     discount_amount = 0
     discount_info = None
     if discount_code:
-        discount = get_discount(discount_code)
+        discount = _product_repo.get_discount(discount_code)
         if discount:
-            # Validate min_qty requirement
             if discount.get("min_qty") and quantity < discount["min_qty"]:
-                discount = None  # Don't apply discount if min_qty not met
+                discount = None
             else:
                 if discount["type"] == "percentage":
                     discount_amount = subtotal * (discount["value"] / 100)

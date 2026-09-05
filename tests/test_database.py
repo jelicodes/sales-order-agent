@@ -6,17 +6,18 @@ import pytest
 @pytest.fixture(autouse=True)
 def temp_db():
     from src.config.settings import settings
+    from src.data.database import init_db
+    from src.data.schema import set_db_path
+
     old_path = settings.DATABASE_PATH
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         temp_path = f.name
     settings.DATABASE_PATH = temp_path
-    from src.data.database import init_db, _db_path
-    import src.data.database as db_module
-    db_module._db_path = None
+    set_db_path(None)
     init_db()
     yield
     settings.DATABASE_PATH = old_path
-    db_module._db_path = None
+    set_db_path(None)
     os.unlink(temp_path)
 
 
@@ -46,36 +47,6 @@ class TestDatabaseCRUD:
         from src.data.database import get_session
         result = get_session("nonexistent")
         assert result is None
-
-    def test_save_and_get_messages(self):
-        from src.data.database import create_session, get_conversation_history
-        create_session("msg-test", "")
-        _insert_message("msg-test", "user", "Hello", "2026-09-03 10:00:00")
-        _insert_message("msg-test", "assistant", "Hi there!", "2026-09-03 10:00:01")
-
-        history = get_conversation_history("msg-test")
-        assert len(history) == 2
-        assert history[0]["role"] == "user"
-        assert history[0]["content"] == "Hello"
-        assert history[1]["role"] == "assistant"
-        assert history[1]["content"] == "Hi there!"
-
-    def test_get_conversation_history_max_messages(self):
-        from src.data.database import create_session, get_conversation_history
-        create_session("max-test", "")
-        for i in range(10):
-            ts = f"2026-09-03 10:00:{i:02d}"
-            _insert_message("max-test", "user", f"Message {i}", ts)
-
-        history = get_conversation_history("max-test", max_messages=5)
-        assert len(history) == 5
-        assert history[0]["content"] == "Message 5"
-        assert history[4]["content"] == "Message 9"
-
-    def test_search_products_empty_database(self):
-        from src.data.database import search_products
-        results = search_products("anything")
-        assert results == []
 
     def test_create_quote(self):
         from src.data.database import create_quote

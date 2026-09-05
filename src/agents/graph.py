@@ -1,5 +1,6 @@
 import json
 from typing import Literal
+from langchain_core.messages import ToolMessage
 from langgraph.graph import StateGraph, END
 from langgraph.types import RetryPolicy, interrupt, Command
 from src.agents.state import AgentState
@@ -11,24 +12,36 @@ def should_continue(state: AgentState) -> str:
     last_message = state["messages"][-1]
     if hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "tools"
-    content = last_message.content if hasattr(last_message, "content") else ""
-    if "ORDER_PENDING" in content:
-        return "confirmation"
     return END
+
+
+def after_tools(state: AgentState) -> str:
+    """Check if any tool result contains ORDER_PENDING."""
+    # If already confirmed, skip confirmation
+    if state.get("confirmation_status") == "confirmed":
+        return "llm"
+    for msg in state["messages"]:
+        content = msg.content if hasattr(msg, "content") else ""
+        if "ORDER_PENDING" in str(content):
+            return "confirmation"
+    return "llm"
 
 
 def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
     """Handle order confirmation via interrupt."""
-    last_message = state["messages"][-1]
-    content = last_message.content if hasattr(last_message, "content") else ""
+    # Find the ORDER_PENDING message
+    order_data = None
+    for msg in state["messages"]:
+        content = msg.content if hasattr(msg, "content") else ""
+        if "ORDER_PENDING" in str(content):
+            try:
+                _, order_data_str = str(content).split("ORDER_PENDING|", 1)
+                order_data = json.loads(order_data_str)
+            except (ValueError, json.JSONDecodeError):
+                continue
+            break
 
-    if "ORDER_PENDING" not in content:
-        return Command(goto="llm")
-
-    try:
-        _, order_data_str = content.split("ORDER_PENDING|", 1)
-        order_data = json.loads(order_data_str)
-    except (ValueError, json.JSONDecodeError):
+    if not order_data:
         return Command(goto="llm")
 
     order_summary = f"Order {order_data['items'][0].get('product_name', 'N/A')} - {order_data['items'][0].get('qty', 0)} pcs - Total: Rp {order_data['total_price']:,}"
@@ -49,16 +62,34 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
             shipping_address=order_data.get("shipping_address"),
             notes=order_data.get("notes"),
         )
+        order_id = order["id"]
+        customer_name = order_data.get("customer_name", "Bapak/Ibu")
+        product_name = order_data["items"][0].get("product_name", "")
+        qty = order_data["items"][0].get("qty", 0)
+        confirmed_msg = (
+            f"Order {order_id} telah berhasil dibuat dan dikonfirmasi. "
+            f"Pelanggan: {customer_name}. "
+            f"Produk: {product_name} {qty} pcs. "
+            f"Total: Rp {order_data['total_price']:,}. "
+            f"Status: pending. "
+            f"Sampaikan kepada pelanggan bahwa order telah berhasil dibuat."
+        )
         return Command(
             update={
+                "messages": [ToolMessage(content=confirmed_msg, name="create_order")],
                 "pending_order": None,
                 "confirmation_status": "confirmed",
+                "customer_id": order_data["customer_id"],
             },
             goto="llm"
         )
     else:
         return Command(
-            update={"pending_order": None, "confirmation_status": None},
+            update={
+                "messages": [ToolMessage(content="Order dibatalkan oleh pelanggan.", name="create_order")],
+                "pending_order": None,
+                "confirmation_status": None,
+            },
             goto="llm"
         )
 
@@ -69,7 +100,7 @@ def create_sales_agent(checkpointer=None):
     graph.add_node("tools", tool_node)
     graph.add_node("confirmation", confirmation_node)
     graph.set_entry_point("llm")
-    graph.add_conditional_edges("llm", should_continue, {"tools": "tools", "confirmation": "confirmation", END: END})
-    graph.add_edge("tools", "llm")
+    graph.add_conditional_edges("llm", should_continue, {"tools": "tools", END: END})
+    graph.add_conditional_edges("tools", after_tools, {"llm": "llm", "confirmation": "confirmation"})
     graph.add_edge("confirmation", "llm")
     return graph.compile(checkpointer=checkpointer)
