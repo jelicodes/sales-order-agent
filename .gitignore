@@ -9,3 +9,6 @@ venv/
 dist/
 build/
 .pytest_cache/
+server.log
+server_err.log
+check_db.py
