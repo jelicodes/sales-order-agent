@@ -4,7 +4,7 @@
 
 ### AI-Powered B2B Fashion Wholesale Ordering System
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![LangGraph](https://img.shields.io/badge/LangGraph-ReAct-FF6B35?style=for-the-badge&logo=langchain&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq-LLM-E8432A?style=for-the-badge&logo=groq&logoColor=white)
@@ -147,7 +147,8 @@ sequenceDiagram
 - **Configurable CORS** — Environment-based origin restriction
 
 ### 📊 Production Ready
-- **86 unit tests** — Tools, database, API, agent, integration
+- **168+ unit tests** — Tools, database, API, agent, HITL E2E, evaluation pipeline
+- **25 eval test cases** — Automated accuracy testing with golden dataset
 - **Rate limiting** — 10 requests/minute per IP
 - **Global error handling** — Consistent error response format
 - **Health checks** — DB, ChromaDB, Groq, Langfuse status
@@ -243,28 +244,96 @@ curl -X POST http://localhost:8000/chat \
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing & Evaluation
+
+### Unit Tests
 
 ```bash
-# Run all unit tests (86 tests)
+# Run all unit tests (168+ tests)
 pytest tests/ -v --ignore=tests/test_integration.py
 
 # Run specific test suites
-pytest tests/test_tools.py -v          # 30 tool tests
-pytest tests/test_database.py -v       # 6 DB tests
+pytest tests/test_tools.py -v          # 52 tool tests
+pytest tests/test_database.py -v       # 10 DB tests
 pytest tests/test_api.py -v            # 9 API tests
-pytest tests/test_agent.py -v          # 4 agent tests
+pytest tests/test_agent.py -v          # 9 agent tests
+pytest tests/test_hitl_e2e.py -v       # 34 HITL E2E tests
 pytest tests/test_integration.py -v    # 3 integration tests (mocked LLM)
+```
+
+### Evaluation Pipeline
+
+Automated eval dengan **25 golden test cases** yang mengukur akurasi tool layer:
+
+```bash
+# Run eval pipeline (25 test cases)
+pytest tests/test_eval_pipeline.py -v
+
+# Run specific category
+pytest tests/test_eval_pipeline.py -v -k "product_search"
+pytest tests/test_eval_pipeline.py -v -k "pricing"
+pytest tests/test_eval_pipeline.py -v -k "stock_check"
+pytest tests/test_eval_pipeline.py -v -k "failure_mode"
+```
+
+#### Eval Results
+
+| Category | Tests | Passed | Accuracy | Avg Latency |
+|----------|-------|--------|----------|-------------|
+| Product Search | 5 | 5 | **100%** | 580ms |
+| Pricing (Tier-based) | 5 | 5 | **100%** | <1ms |
+| Stock Check | 5 | 5 | **100%** | <1ms |
+| Combined Queries | 5 | 5 | **100%** | 200ms |
+| Failure Modes | 5 | 5 | **100%** | <1ms |
+| **Overall** | **25** | **25** | **100%** | **<200ms** |
+
+#### Eval Design
+
+```mermaid
+graph LR
+    subgraph Golden["📋 Golden Dataset"]
+        G1["15 Real Cases<br/>(from seed data)"]
+        G2["10 Edge Cases<br/>(failure modes)"]
+    end
+
+    subgraph Tools["🔧 Tool Layer"]
+        T1["search_products"]
+        T2["calculate_price"]
+        T3["check_stock"]
+    end
+
+    subgraph Assert["✅ Assertions"]
+        A1["Product ID Match"]
+        A2["Price Tier Match"]
+        A3["Stock Availability"]
+        A4["Keyword Presence"]
+        A5["Forbidden Keywords"]
+    end
+
+    subgraph Report["📊 Report"]
+        R1["Accuracy %"]
+        R2["Latency p50"]
+        R3["Pass/Fail"]
+    end
+
+    Golden --> Tools --> Assert --> Report
+
+    style Golden fill:#E8F5E9,stroke:#2E7D32
+    style Tools fill:#FFF3E0,stroke:#E65100
+    style Assert fill:#E3F2FD,stroke:#1565C0
+    style Report fill:#F3E5F5,stroke:#6A1B9A
 ```
 
 ### Test Coverage
 
 | Module | Tests | Status |
 |--------|-------|--------|
-| Tools | 30 | ✅ All passing |
-| Database | 15 | ✅ All passing |
+| Tools | 52 | ✅ All passing |
+| Eval Pipeline | 25 | ✅ 100% accuracy |
+| HITL E2E | 34 | ✅ All passing |
+| Database | 10 | ✅ All passing |
 | API | 9 | ✅ All passing |
-| Agent | 4 | ✅ 3/4 (1 pre-existing) |
+| Agent | 9 | ✅ All passing |
 | Integration | 3 | ✅ All passing |
 
 ---
@@ -298,6 +367,18 @@ src/
 └── config/                    # ⚙️ Configuration
     ├── settings.py           #   Pydantic Settings
     └── langfuse.py           #   Langfuse integration
+
+tests/
+├── test_tools.py             # 52 tool tests
+├── test_eval_pipeline.py     # 25 eval pipeline tests ← NEW
+├── golden_dataset.json       # 25 golden test cases ← NEW
+├── test_hitl_e2e.py          # 34 HITL E2E tests
+├── test_database.py          # 10 DB tests
+├── test_database_extended.py # 8 extended DB tests
+├── test_api.py               # 9 API tests
+├── test_agent.py             # 9 agent tests
+├── test_integration.py       # 3 integration tests
+└── conftest.py               # Shared fixtures
 ```
 
 ---
@@ -306,7 +387,7 @@ src/
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.13+
 - [Groq API Key](https://console.groq.com/) (free tier available)
 - [Google API Key](https://aistudio.google.com/) (for Gemini Embedding)
 
@@ -346,6 +427,8 @@ Server runs at `http://localhost:8000`
 | DB Query (cold) | ~5ms |
 | API Response (cached) | <200ms |
 | API Response (LLM) | 1-3s |
+| **Eval Pipeline (25 cases)** | **<10s total** |
+| **Tool Accuracy (eval)** | **100%** |
 
 ---
 

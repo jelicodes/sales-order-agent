@@ -1,0 +1,225 @@
+{
+  "version": "1.0",
+  "description": "Golden dataset for eval pipeline - 25 test cases covering product search, pricing, stock check, combined queries, and failure modes",
+  "test_cases": [
+    {
+      "id": "search_01",
+      "category": "product_search",
+      "query": "Cari kaos polo",
+      "expected_product_ids": [1, 2],
+      "expected_categories": ["Polo"],
+      "assertion_type": "product_id_match"
+    },
+    {
+      "id": "search_02",
+      "category": "product_search",
+      "query": "Ada kaos polos gak?",
+      "expected_product_ids": [3, 4],
+      "expected_categories": ["Kaos"],
+      "assertion_type": "product_id_match"
+    },
+    {
+      "id": "search_03",
+      "category": "product_search",
+      "query": "Saya cari jaket",
+      "expected_product_ids": [5, 6],
+      "expected_categories": ["Jaket"],
+      "assertion_type": "product_id_match"
+    },
+    {
+      "id": "search_04",
+      "category": "product_search",
+      "query": "Celana apa aja yang ada?",
+      "expected_product_ids": [9, 10],
+      "expected_categories": ["Celana"],
+      "assertion_type": "product_id_match"
+    },
+    {
+      "id": "search_05",
+      "category": "product_search",
+      "query": "Seragam kantor ada?",
+      "expected_product_ids": [7, 8],
+      "expected_categories": ["Seragam"],
+      "assertion_type": "product_id_match"
+    },
+    {
+      "id": "price_01",
+      "category": "pricing",
+      "query": "Harga 50 pcs Polo Premium Cotton berapa?",
+      "expected_keywords": ["85000", "Rp"],
+      "product_id": 1,
+      "quantity": 50,
+      "expected_price_per_unit": 85000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "price_02",
+      "category": "pricing",
+      "query": "Kalau 150 pcs Polo Premium Cotton berapa?",
+      "expected_keywords": ["80000", "Rp"],
+      "product_id": 1,
+      "quantity": 150,
+      "expected_price_per_unit": 80000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "price_03",
+      "category": "pricing",
+      "query": "Harga 350 pcs Polo Premium?",
+      "expected_keywords": ["75000", "Rp"],
+      "product_id": 1,
+      "quantity": 350,
+      "expected_price_per_unit": 75000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "price_04",
+      "category": "pricing",
+      "query": "600 pcs Polo Premium Cotton berapa per unit?",
+      "expected_keywords": ["70000", "Rp"],
+      "product_id": 1,
+      "quantity": 600,
+      "expected_price_per_unit": 70000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "price_05",
+      "category": "pricing",
+      "query": "Harga 1000 kaos polos standar?",
+      "expected_keywords": ["28000", "Rp"],
+      "product_id": 4,
+      "quantity": 1000,
+      "expected_price_per_unit": 28000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "stock_01",
+      "category": "stock_check",
+      "query": "Stok Polo Premium Cotton 100 pcs ada?",
+      "expected_keywords": ["tersedia", "stok", "100"],
+      "product_id": 1,
+      "quantity": 100,
+      "expected_available": true,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "stock_02",
+      "category": "stock_check",
+      "query": "Saya butuh 5000 pcs Polo Premium, ada?",
+      "expected_keywords": ["tidak", "habis", "kurang", "stok"],
+      "product_id": 1,
+      "quantity": 5000,
+      "expected_available": false,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "stock_03",
+      "category": "stock_check",
+      "query": "Jaket Bomber 1000 pcs ready?",
+      "expected_keywords": ["tidak", "habis", "kurang", "stok"],
+      "product_id": 5,
+      "quantity": 1000,
+      "expected_available": false,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "stock_04",
+      "category": "stock_check",
+      "query": "50 pcs Jaket Bomber ada?",
+      "expected_keywords": ["tersedia", "stok", "50"],
+      "product_id": 5,
+      "quantity": 50,
+      "expected_available": true,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "stock_05",
+      "category": "stock_check",
+      "query": "Topi Baseball 1000 pcs stoknya?",
+      "expected_keywords": ["tersedia", "stok", "1000"],
+      "product_id": 12,
+      "quantity": 1000,
+      "expected_available": true,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "combined_01",
+      "category": "combined_query",
+      "query": "Saya butuh 500 kaos polo untuk seragam karyawan",
+      "expected_keywords": ["Polo", "stok", "500"],
+      "expected_tools_used": ["search_products", "check_stock"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "combined_02",
+      "category": "combined_query",
+      "query": "Buatkan penawaran 200 kaos polos premium",
+      "expected_keywords": ["penawaran", "Kaos Polos Premium", "200"],
+      "expected_tools_used": ["search_products", "calculate_price"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "combined_03",
+      "category": "combined_query",
+      "query": "Ada celana warna navy?",
+      "expected_keywords": ["Celana", "navy", "Navy"],
+      "expected_tools_used": ["search_products", "check_stock"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "combined_04",
+      "category": "combined_query",
+      "query": "Harga 1000 kaos polos standar berapa?",
+      "expected_keywords": ["28000", "Kaos Polos Standar", "Rp"],
+      "expected_tools_used": ["search_products", "calculate_price"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "combined_05",
+      "category": "combined_query",
+      "query": "Stok jaket hitam berapa?",
+      "expected_keywords": ["Jaket", "Hitam", "stok"],
+      "expected_tools_used": ["search_products", "check_stock"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "failure_01",
+      "category": "failure_mode",
+      "query": "Saya butuh 10000 jaket bomber kulit",
+      "expected_keywords": ["tidak", "habis", "kurang", "stok", "alternatif"],
+      "product_id": 5,
+      "quantity": 10000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "failure_02",
+      "category": "failure_mode",
+      "query": "Cari sepatu sneakers",
+      "expected_keywords": ["tidak", "belum", "gak ada", "tersedia"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "failure_03",
+      "category": "failure_mode",
+      "query": "Stok seragam pink ada?",
+      "expected_keywords": ["tidak", "belum", "tersedia", "warna"],
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "failure_04",
+      "category": "failure_mode",
+      "query": "Beli 10000 kaos polos premium sekaligus",
+      "expected_keywords": ["tidak", "habis", "kurang", "stok"],
+      "product_id": 3,
+      "quantity": 10000,
+      "assertion_type": "keyword_presence"
+    },
+    {
+      "id": "failure_05",
+      "category": "failure_mode",
+      "query": "Tas ransel ada?",
+      "expected_keywords": ["tidak", "belum", "gak ada", "tersedia"],
+      "assertion_type": "keyword_presence"
+    }
+  ]
+}
