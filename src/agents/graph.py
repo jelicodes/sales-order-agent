@@ -44,6 +44,15 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
     if not order_data:
         return Command(goto="llm")
 
+    # Find the original tool_call_id from the create_order tool call
+    tool_call_id = "create_order_confirmed"
+    for msg in state["messages"]:
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            for tc in msg.tool_calls:
+                if tc.get("name") == "create_order":
+                    tool_call_id = tc.get("id", tool_call_id)
+                    break
+
     order_summary = f"Order {order_data['items'][0].get('product_name', 'N/A')} - {order_data['items'][0].get('qty', 0)} pcs - Total: Rp {order_data['total_price']:,}"
 
     human_response = interrupt({
@@ -76,7 +85,7 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
         )
         return Command(
             update={
-                "messages": [ToolMessage(content=confirmed_msg, name="create_order")],
+                "messages": [ToolMessage(content=confirmed_msg, name="create_order", tool_call_id=tool_call_id)],
                 "pending_order": None,
                 "confirmation_status": "confirmed",
                 "customer_id": order_data["customer_id"],
@@ -86,7 +95,7 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
     else:
         return Command(
             update={
-                "messages": [ToolMessage(content="Order dibatalkan oleh pelanggan.", name="create_order")],
+                "messages": [ToolMessage(content="Order dibatalkan oleh pelanggan.", name="create_order", tool_call_id=tool_call_id)],
                 "pending_order": None,
                 "confirmation_status": None,
             },
