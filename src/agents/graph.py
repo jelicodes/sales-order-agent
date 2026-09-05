@@ -61,7 +61,21 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
         "message": "Ketik 'YA' untuk konfirmasi order atau 'BATAL' untuk membatalkan"
     })
 
-    if human_response and str(human_response).strip().upper() == "YA":
+    response_text = str(human_response).strip().lower() if human_response else ""
+
+    # Keyword matching for confirmation/cancellation
+    # Works for both chat-based (free text) and button-based (exact "YA"/"BATAL") flows
+    confirm_keywords = ("ya", "ok", "oke", "konfirmasi", "setuju", "lanjut", "proceed", "yes")
+    cancel_keywords = ("batal", "cancel", "tidak", "no", "goback", "kembali")
+
+    is_confirmed = any(kw in response_text for kw in confirm_keywords)
+    is_cancelled = any(kw in response_text for kw in cancel_keywords)
+
+    # If both present, cancel wins (safer to not create order by accident)
+    if is_cancelled:
+        is_confirmed = False
+
+    if is_confirmed and not is_cancelled:
         order = db_create_order(
             customer_id=order_data["customer_id"],
             items=order_data["items"],

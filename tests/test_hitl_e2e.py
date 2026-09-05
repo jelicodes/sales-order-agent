@@ -410,7 +410,7 @@ class TestHITLConfirmFlow:
             mock_db_create.assert_called_once()
 
     def test_non_ya_response_cancels(self, checkpointer):
-        """User types something other than YA/BATAL — order should be cancelled."""
+        """User types something without confirm/cancel keywords — order should be cancelled."""
         agent = create_sales_agent(checkpointer=checkpointer)
         config = {"configurable": {"thread_id": "test-random-response"}}
 
@@ -427,7 +427,97 @@ class TestHITLConfirmFlow:
             )
 
             mock_llm.invoke.return_value = _make_final_response("Baik.")
-            agent.invoke(Command(resume="tolong dipercepat ya"), config)
+            agent.invoke(Command(resume="tolong dipercepat"), config)
+
+            mock_db_create.assert_not_called()
+
+    def test_confirm_with_keyword_ok(self, checkpointer):
+        """User types 'ok' — should confirm."""
+        agent = create_sales_agent(checkpointer=checkpointer)
+        config = {"configurable": {"thread_id": "test-keyword-ok"}}
+
+        with patch("src.agents.nodes.get_llm") as mock_get_llm, \
+             patch("src.agents.graph.db_create_order") as mock_db_create:
+
+            mock_llm = MagicMock()
+            mock_get_llm.return_value = mock_llm
+
+            mock_llm.invoke.return_value = _make_order_tool_call(SAMPLE_ORDER)
+            agent.invoke(
+                {"messages": [HumanMessage(content="Order 100 Polo Navy")]},
+                config,
+            )
+
+            mock_llm.invoke.return_value = _make_final_response("OK")
+            mock_db_create.return_value = {"id": "ORD-OK", "status": "pending"}
+            agent.invoke(Command(resume="ok"), config)
+
+            mock_db_create.assert_called_once()
+
+    def test_confirm_with_keyword_setuju(self, checkpointer):
+        """User types 'setuju, lanjut' — should confirm."""
+        agent = create_sales_agent(checkpointer=checkpointer)
+        config = {"configurable": {"thread_id": "test-keyword-setuju"}}
+
+        with patch("src.agents.nodes.get_llm") as mock_get_llm, \
+             patch("src.agents.graph.db_create_order") as mock_db_create:
+
+            mock_llm = MagicMock()
+            mock_get_llm.return_value = mock_llm
+
+            mock_llm.invoke.return_value = _make_order_tool_call(SAMPLE_ORDER)
+            agent.invoke(
+                {"messages": [HumanMessage(content="Order 100 Polo Navy")]},
+                config,
+            )
+
+            mock_llm.invoke.return_value = _make_final_response("Done")
+            mock_db_create.return_value = {"id": "ORD-SETUJU", "status": "pending"}
+            agent.invoke(Command(resume="setuju, lanjut"), config)
+
+            mock_db_create.assert_called_once()
+
+    def test_cancel_with_keyword_tidak(self, checkpointer):
+        """User types 'tidak jadi' — should cancel."""
+        agent = create_sales_agent(checkpointer=checkpointer)
+        config = {"configurable": {"thread_id": "test-keyword-tidak"}}
+
+        with patch("src.agents.nodes.get_llm") as mock_get_llm, \
+             patch("src.agents.graph.db_create_order") as mock_db_create:
+
+            mock_llm = MagicMock()
+            mock_get_llm.return_value = mock_llm
+
+            mock_llm.invoke.return_value = _make_order_tool_call(SAMPLE_ORDER)
+            agent.invoke(
+                {"messages": [HumanMessage(content="Order 100 Polo Navy")]},
+                config,
+            )
+
+            mock_llm.invoke.return_value = _make_final_response("Baik")
+            agent.invoke(Command(resume="tidak jadi dulu"), config)
+
+            mock_db_create.assert_not_called()
+
+    def test_cancel_wins_over_confirm(self, checkpointer):
+        """User types 'ya batal' — cancel wins (safer default)."""
+        agent = create_sales_agent(checkpointer=checkpointer)
+        config = {"configurable": {"thread_id": "test-cancel-wins"}}
+
+        with patch("src.agents.nodes.get_llm") as mock_get_llm, \
+             patch("src.agents.graph.db_create_order") as mock_db_create:
+
+            mock_llm = MagicMock()
+            mock_get_llm.return_value = mock_llm
+
+            mock_llm.invoke.return_value = _make_order_tool_call(SAMPLE_ORDER)
+            agent.invoke(
+                {"messages": [HumanMessage(content="Order 100 Polo Navy")]},
+                config,
+            )
+
+            mock_llm.invoke.return_value = _make_final_response("Baik")
+            agent.invoke(Command(resume="ya batal"), config)
 
             mock_db_create.assert_not_called()
 
