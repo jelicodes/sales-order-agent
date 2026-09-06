@@ -23,6 +23,18 @@ class TestChat:
         assert "session_id" in response.json()
 
 
+class TestChatStream:
+    def test_chat_stream_endpoint(self, client):
+        response = client.post("/chat/stream", json={"message": "Halo"})
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+
+    def test_chat_stream_with_session(self, client):
+        response = client.post("/chat/stream", json={"message": "Halo", "session_id": ""})
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+
+
 class TestInputValidation:
     def test_chat_empty_message(self, client):
         response = client.post("/chat", json={"message": ""})
