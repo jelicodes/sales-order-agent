@@ -89,6 +89,10 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
 
             content = msg.content if hasattr(msg, "content") else str(msg)
 
+            # Skip AIMessage with empty content (tool call messages)
+            if isinstance(content, str) and not content.strip():
+                continue
+
             # Handle ORDER_PENDING in dict format
             if isinstance(content, dict):
                 if content.get("ORDER_PENDING"):
@@ -126,14 +130,21 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
                     try:
                         parsed = json.loads(content)
                         if isinstance(parsed, dict):
-                            # Check for structured tool outputs
-                            for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions"):
-                                if key in parsed:
-                                    yield _sse_event("tool_output", {
-                                        "type": key,
-                                        "data": parsed[key],
-                                    })
-                                    break
+                            # Check for {type, data} tool output format
+                            if "type" in parsed and "data" in parsed:
+                                yield _sse_event("tool_output", {
+                                    "type": parsed["type"],
+                                    "data": parsed["data"],
+                                })
+                            # Check for nested structured tool outputs
+                            elif any(key in parsed for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions")):
+                                for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions"):
+                                    if key in parsed:
+                                        yield _sse_event("tool_output", {
+                                            "type": key,
+                                            "data": parsed[key],
+                                        })
+                                        break
                             else:
                                 yield _sse_event("text_delta", content)
                         else:
