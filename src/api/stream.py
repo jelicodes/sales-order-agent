@@ -1,11 +1,12 @@
 import json
+import re
 import uuid
 import asyncio
 import logging
 from typing import AsyncGenerator
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage, AIMessage, trim_messages
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, trim_messages
 from langgraph.types import Command
 from groq import RateLimitError as GroqRateLimitError
 from src.agents.graph import create_sales_agent
@@ -14,11 +15,46 @@ from src.api.models import ChatRequest
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+STRUCTURED_OUTPUT_KEYS = ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions")
+JSON_TOOL_PATTERN = re.compile(
+    r'^\s*\{.*"(?:available|total_stock|variants|error|message)"\s*:',
+    re.DOTALL,
+)
+
 
 def _sse_event(event: str, data: dict | str) -> str:
     """Format a single SSE event."""
     payload = json.dumps(data, ensure_ascii=False) if isinstance(data, dict) else data
     return f"event: {event}\ndata: {payload}\n\n"
+
+
+def _is_raw_tool_json(content: str) -> bool:
+    """Detect raw tool output JSON that should not be shown as chat text."""
+    if not content.startswith("{"):
+        return False
+    try:
+        parsed = json.loads(content)
+    except (json.JSONDecodeError, ValueError):
+        return False
+    if not isinstance(parsed, dict):
+        return False
+    if any(key in parsed for key in STRUCTURED_OUTPUT_KEYS):
+        return False
+    if "type" in parsed and "data" in parsed:
+        return False
+    return bool(JSON_TOOL_PATTERN.match(content))
+
+
+def _get_message_count(checkpointer, session_id: str) -> int:
+    """Get the current message count from checkpointer state."""
+    try:
+        config = {"configurable": {"thread_id": session_id}}
+        snapshot = checkpointer.get(config)
+        if snapshot and "channel_values" in snapshot:
+            return len(snapshot["channel_values"].get("messages", []))
+    except Exception:
+        pass
+    return 0
 
 
 async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str, None]:
@@ -29,7 +65,6 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
 
     logger.info(f"[{request_id}] SSE stream request: session={session_id}")
 
-    # Send session info first
     yield _sse_event("session_info", {
         "session_id": session_id,
         "request_id": request_id,
@@ -39,6 +74,7 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
 
     try:
         config = {"configurable": {"thread_id": session_id}}
+        prev_count = _get_message_count(checkpointer, session_id)
         upper = req.message.strip().upper()
 
         if upper in ("YA", "BATAL"):
@@ -66,7 +102,6 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
                 config,
             )
 
-        # Handle HITL interrupt
         if isinstance(result, dict) and "__interrupt__" in result:
             interrupts = result["__interrupt__"]
             if interrupts:
@@ -80,42 +115,55 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
                 yield _sse_event("stream_end", {"status": "interrupted"})
                 return
 
-        # Process messages from result
-        messages = result.get("messages", []) if isinstance(result, dict) else []
-        for msg in messages:
-            # Skip HumanMessage - only process AI responses
+        all_messages = result.get("messages", []) if isinstance(result, dict) else []
+        new_messages = all_messages[prev_count:] if prev_count > 0 else all_messages
+
+        for msg in new_messages:
             if isinstance(msg, HumanMessage):
                 continue
 
             content = msg.content if hasattr(msg, "content") else str(msg)
 
-            # Skip AIMessage with empty content (tool call messages)
             if isinstance(content, str) and not content.strip():
                 continue
 
-            # Handle ORDER_PENDING in dict format
+            if isinstance(msg, ToolMessage):
+                _type = None
+                try:
+                    parsed = json.loads(content) if isinstance(content, str) else content
+                    if isinstance(parsed, dict):
+                        if "type" in parsed and "data" in parsed:
+                            _type = parsed["type"]
+                        else:
+                            for key in STRUCTURED_OUTPUT_KEYS:
+                                if key in parsed:
+                                    _type = key
+                                    break
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+                if _type:
+                    data = parsed.get("data", parsed) if isinstance(parsed, dict) else content
+                    yield _sse_event("tool_output", {"type": _type, "data": data})
+                continue
+
             if isinstance(content, dict):
                 if content.get("ORDER_PENDING"):
+                    order_val = content["ORDER_PENDING"]
                     yield _sse_event("tool_output", {
                         "type": "order_pending",
-                        "data": content["ORDER_PENDING"] if isinstance(content["ORDER_PENDING"], str) else json.dumps(content["ORDER_PENDING"], ensure_ascii=False),
+                        "data": order_val if isinstance(order_val, str) else json.dumps(order_val, ensure_ascii=False),
                     })
                     continue
-                # Check for structured tool outputs
-                for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions"):
+                for key in STRUCTURED_OUTPUT_KEYS:
                     if key in content:
-                        yield _sse_event("tool_output", {
-                            "type": key,
-                            "data": content[key],
-                        })
+                        yield _sse_event("tool_output", {"type": key, "data": content[key]})
                         break
                 else:
-                    logger.warning(f"[{request_id}] Unknown dict content type: {list(content.keys())}")
-                    continue
+                    logger.debug(f"[{request_id}] Skipping non-structured dict: {list(content.keys())}")
+                continue
 
-            # Handle string content
             if isinstance(content, str) and content:
-                # Check for ORDER_PENDING in string format
                 if "ORDER_PENDING" in content:
                     try:
                         _, order_data_str = content.split("ORDER_PENDING|", 1)
@@ -125,32 +173,10 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
                         })
                     except ValueError:
                         yield _sse_event("text_delta", content)
+                elif _is_raw_tool_json(content):
+                    logger.debug(f"[{request_id}] Skipping raw tool JSON in text_delta")
                 else:
-                    # Try to parse as JSON to detect tool outputs
-                    try:
-                        parsed = json.loads(content)
-                        if isinstance(parsed, dict):
-                            # Check for {type, data} tool output format
-                            if "type" in parsed and "data" in parsed:
-                                yield _sse_event("tool_output", {
-                                    "type": parsed["type"],
-                                    "data": parsed["data"],
-                                })
-                            # Check for nested structured tool outputs
-                            elif any(key in parsed for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions")):
-                                for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions"):
-                                    if key in parsed:
-                                        yield _sse_event("tool_output", {
-                                            "type": key,
-                                            "data": parsed[key],
-                                        })
-                                        break
-                            else:
-                                yield _sse_event("text_delta", content)
-                        else:
-                            yield _sse_event("text_delta", content)
-                    except (json.JSONDecodeError, ValueError):
-                        yield _sse_event("text_delta", content)
+                    yield _sse_event("text_delta", content)
 
         yield _sse_event("stream_end", {"status": "ok"})
 
