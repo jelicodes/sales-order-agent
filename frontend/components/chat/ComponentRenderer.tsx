@@ -1,6 +1,7 @@
 import { ProductCards } from "@/components/generative-ui/ProductCards";
 import { PriceTable } from "@/components/generative-ui/PriceTable";
 import { OrderSummary } from "@/components/generative-ui/OrderSummary";
+import { ReorderSuggestions } from "@/components/generative-ui/ReorderSuggestions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ComponentRendererProps {
@@ -23,26 +24,4 @@ export function ComponentRenderer({ type, data }: ComponentRendererProps) {
   }
 }
 
-function ReorderSuggestions({ data }: { data: Record<string, unknown> }) {
-  const suggestions = (data.suggestions as Array<Record<string, unknown>>) || [];
 
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle className="text-sm">Saran Pemesanan Ulang</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-1 text-sm">
-          {suggestions.map((item, i) => (
-            <li key={i} className="flex justify-between">
-              <span className="text-muted-foreground">
-                {String(item.name || "")}
-              </span>
-              <span>{String(item.reason || "")}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
