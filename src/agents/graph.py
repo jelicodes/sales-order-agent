@@ -17,11 +17,12 @@ def should_continue(state: AgentState) -> str:
 
 def after_tools(state: AgentState) -> str:
     """Check if any tool result contains ORDER_PENDING."""
-    # If already confirmed, skip confirmation
     if state.get("confirmation_status") == "confirmed":
         return "llm"
     for msg in state["messages"]:
         content = msg.content if hasattr(msg, "content") else ""
+        if isinstance(content, dict) and content.get("ORDER_PENDING"):
+            return "confirmation"
         if "ORDER_PENDING" in str(content):
             return "confirmation"
     return "llm"
@@ -29,10 +30,21 @@ def after_tools(state: AgentState) -> str:
 
 def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
     """Handle order confirmation via interrupt."""
-    # Find the ORDER_PENDING message
     order_data = None
+    tool_call_id = "create_order_confirmed"
+
     for msg in state["messages"]:
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            for tc in msg.tool_calls:
+                if tc.get("name") == "create_order":
+                    tool_call_id = tc.get("id", tool_call_id)
         content = msg.content if hasattr(msg, "content") else ""
+        if isinstance(content, dict) and "ORDER_PENDING" in content:
+            try:
+                order_data = json.loads(content["ORDER_PENDING"])
+            except (json.JSONDecodeError, TypeError):
+                continue
+            break
         if "ORDER_PENDING" in str(content):
             try:
                 _, order_data_str = str(content).split("ORDER_PENDING|", 1)
@@ -44,16 +56,10 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
     if not order_data:
         return Command(goto="llm")
 
-    # Find the original tool_call_id from the create_order tool call
-    tool_call_id = "create_order_confirmed"
-    for msg in state["messages"]:
-        if hasattr(msg, "tool_calls") and msg.tool_calls:
-            for tc in msg.tool_calls:
-                if tc.get("name") == "create_order":
-                    tool_call_id = tc.get("id", tool_call_id)
-                    break
-
-    order_summary = f"Order {order_data['items'][0].get('product_name', 'N/A')} - {order_data['items'][0].get('qty', 0)} pcs - Total: Rp {order_data['total_price']:,}"
+    items = order_data.get("items", [])
+    product_name = items[0].get("product_name", "N/A") if items else "N/A"
+    qty = items[0].get("qty", 0) if items else 0
+    order_summary = f"Order {product_name} - {qty} pcs - Total: Rp {order_data['total_price']:,}"
 
     human_response = interrupt({
         "action": "create_order",

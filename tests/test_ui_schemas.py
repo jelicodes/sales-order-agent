@@ -68,3 +68,16 @@ def test_calculate_price_returns_structured():
     assert "data" in result
     assert "tiers" in result["data"]
     assert "total" in result["data"]
+
+
+def test_create_order_returns_structured():
+    from src.tools.create_order import create_order
+    items_json = '[{"product_id": 1, "product_name": "Kemeja", "qty": 100, "price_per_unit": 75000}]'
+    result = create_order.invoke({
+        "customer_id": "CUST-001",
+        "items_json": items_json,
+    })
+    assert isinstance(result, dict)
+    assert result["type"] == "order_summary"
+    assert result["data"]["total_price"] == 7500000
+    assert "ORDER_PENDING" in result
