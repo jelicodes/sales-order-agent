@@ -115,19 +115,18 @@ class TestOrderOperations:
         orders = get_orders_by_customer(customer["id"])
         assert len(orders) == 2
 
-
-def test_get_items_by_customer():
-    from src.data.repos.order_repo import OrderRepo
-    from src.data.repos.customer_repo import CustomerRepo
-    cust_repo = CustomerRepo()
-    cust = cust_repo.create(name="Test Reorder", phone="081999999999")
-    repo = OrderRepo()
-    repo.create_order(
-        customer_id=cust["id"],
-        items=[{"product_id": 1, "product_name": "Kemeja", "qty": 50, "price_per_unit": 80000, "subtotal": 4000000}],
-        subtotal=4000000, discount_amount=0, total_price=4000000,
-    )
-    items = repo.get_items_by_customer(cust["id"], limit=5)
-    assert isinstance(items, list)
-    assert len(items) >= 1
-    assert items[0]["product_name"] == "Kemeja"
+    def test_get_items_by_customer(self):
+        from src.data.repos.order_repo import OrderRepo
+        from src.data.repos.customer_repo import CustomerRepo
+        cust_repo = CustomerRepo()
+        cust = cust_repo.create(name="Test Reorder", phone="081999999999")
+        repo = OrderRepo()
+        repo.create_order(
+            customer_id=cust["id"],
+            items=[{"product_id": 1, "product_name": "Kemeja", "qty": 50, "price_per_unit": 80000, "subtotal": 4000000}],
+            subtotal=4000000, discount_amount=0, total_price=4000000,
+        )
+        items = repo.get_items_by_customer(cust["id"], limit=5)
+        assert isinstance(items, list)
+        assert len(items) >= 1
+        assert items[0]["product_name"] == "Kemeja"
