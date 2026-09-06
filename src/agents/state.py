@@ -8,5 +8,8 @@ class AgentState(TypedDict):
     session_id: str
     context: dict
     customer_id: Optional[str]
+    customer_name: Optional[str]
+    customer_phone: Optional[str]
+    is_returning: Optional[bool]
     pending_order: Optional[dict]
     confirmation_status: Optional[str]  # none, awaiting, confirmed
