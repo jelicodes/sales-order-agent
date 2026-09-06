@@ -1,10 +1,15 @@
 import pytest
+import tempfile
+import os
+import json
+from pathlib import Path
 from src.tools.search_products import search_products
 from src.tools.get_product_detail import get_product_detail
 from src.tools.check_stock import check_stock
 from src.tools.calculate_price import calculate_price
 from src.tools.create_quote import create_quote
 from src.tools.get_alternatives import get_alternatives
+from src.tools.get_reorder_suggestions import get_reorder_suggestions
 
 
 # ============================================================
@@ -345,3 +350,145 @@ class TestEdgeCases:
         result = calculate_price.invoke({"product_id": 1, "quantity": 50, "discount_code": "BULK500"})
         assert result["data"]["discount"] is None
         assert result["data"]["discount_amount"] == 0
+
+
+# ============================================================
+# GET REORDER SUGGESTIONS
+# ============================================================
+@pytest.fixture(autouse=True)
+def temp_db():
+    from src.config.settings import settings
+    import src.data.database as db_module
+    import src.data.schema as schema_module
+    from src.data.database import init_db
+
+    old_path = settings.DATABASE_PATH
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+        temp_path = f.name
+    settings.DATABASE_PATH = temp_path
+    db_module._db_path = None
+    schema_module._db_path = None
+    from src.data.repos.product_repo import _product_cache, _price_tier_cache, _all_tiers_cache, _discount_cache
+    _product_cache.clear()
+    _price_tier_cache.clear()
+    _all_tiers_cache.clear()
+    _discount_cache.clear()
+    init_db()
+
+    seed_dir = Path(__file__).parent.parent / "src" / "data" / "seed"
+
+    def load_json(filename):
+        with open(seed_dir / filename) as f:
+            return json.load(f)
+
+    products = load_json("products.json")
+    price_tiers_raw = load_json("price_tiers.json")
+    stock_raw = load_json("stock.json")
+    discounts = load_json("discounts.json")
+
+    from src.data.database import get_connection
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        for p in products:
+            cursor.execute(
+                "INSERT INTO products (id, name, category, description, base_price, moq, lead_time_days) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (p["id"], p["name"], p["category"], p["description"], p["base_price"], p["moq"], p["lead_time_days"]),
+            )
+        for entry in stock_raw:
+            for v in entry["variants"]:
+                cursor.execute(
+                    "INSERT INTO product_variants (product_id, color) VALUES (?, ?)",
+                    (entry["product_id"], v["color"]),
+                )
+                variant_id = cursor.lastrowid
+                cursor.execute(
+                    "INSERT INTO stock (variant_id, quantity, warehouse_location) VALUES (?, ?, ?)",
+                    (variant_id, v["quantity"], v["warehouse"]),
+                )
+        for pt in price_tiers_raw:
+            for tier in pt["tiers"]:
+                cursor.execute(
+                    "INSERT INTO price_tiers (product_id, min_qty, max_qty, price_per_unit) VALUES (?, ?, ?, ?)",
+                    (pt["product_id"], tier["min_qty"], tier["max_qty"], tier["price_per_unit"]),
+                )
+        for d in discounts:
+            cursor.execute(
+                "INSERT INTO discounts (code, type, value, min_qty, valid_until) VALUES (?, ?, ?, ?, ?)",
+                (d["code"], d["type"], d["value"], d["min_qty"], d["valid_until"]),
+            )
+
+    yield
+
+    _product_cache.clear()
+    _price_tier_cache.clear()
+    _all_tiers_cache.clear()
+    _discount_cache.clear()
+    settings.DATABASE_PATH = old_path
+    db_module._db_path = None
+    schema_module._db_path = None
+    os.unlink(temp_path)
+
+
+class TestGetReorderSuggestions:
+    def _create_customer_with_orders(self):
+        from src.data.database import create_customer, create_order as db_create_order
+        customer = create_customer(name="Toko Reorder")
+        items = [
+            {"product_id": 1, "product_name": "Polo Premium Cotton", "qty": 100, "price_per_unit": 80000, "subtotal": 8000000},
+            {"product_id": 2, "product_name": "Kaos Polos Combed", "qty": 200, "price_per_unit": 45000, "subtotal": 9000000},
+        ]
+        db_create_order(customer_id=customer["id"], items=items, subtotal=17000000, discount_amount=0, total_price=17000000)
+        return customer["id"]
+
+    def test_returns_structured_dict(self):
+        customer_id = self._create_customer_with_orders()
+        result = get_reorder_suggestions.invoke({"customer_id": customer_id})
+        assert isinstance(result, dict)
+        assert result["type"] == "reorder_suggestions"
+        assert "data" in result
+
+    def test_returns_suggestions_with_items(self):
+        customer_id = self._create_customer_with_orders()
+        result = get_reorder_suggestions.invoke({"customer_id": customer_id})
+        assert len(result["data"]) == 2
+
+    def test_suggestion_has_required_fields(self):
+        customer_id = self._create_customer_with_orders()
+        result = get_reorder_suggestions.invoke({"customer_id": customer_id})
+        for item in result["data"]:
+            assert "product_id" in item
+            assert "product_name" in item
+            assert "last_qty" in item
+            assert "last_price" in item
+            assert "last_order_date" in item
+            assert "image_url" in item
+            assert "base_price" in item
+
+    def test_deduplicates_products(self):
+        from src.data.database import create_customer, create_order as db_create_order
+        customer = create_customer(name="Toko Dup")
+        items = [
+            {"product_id": 1, "product_name": "Polo", "qty": 50, "price_per_unit": 80000, "subtotal": 4000000},
+            {"product_id": 1, "product_name": "Polo", "qty": 30, "price_per_unit": 80000, "subtotal": 2400000},
+        ]
+        db_create_order(customer_id=customer["id"], items=items, subtotal=6400000, discount_amount=0, total_price=6400000)
+        result = get_reorder_suggestions.invoke({"customer_id": customer["id"]})
+        product_ids = [item["product_id"] for item in result["data"]]
+        assert len(product_ids) == len(set(product_ids))
+
+    def test_empty_for_no_orders(self):
+        result = get_reorder_suggestions.invoke({"customer_id": "CUST-NONEXISTENT"})
+        assert result["type"] == "reorder_suggestions"
+        assert result["data"] == []
+        assert "message" in result
+
+    def test_limit_five_items(self):
+        from src.data.database import create_customer, create_order as db_create_order
+        customer = create_customer(name="Toko Limit")
+        items = [
+            {"product_id": i, "product_name": f"Product {i}", "qty": 10, "price_per_unit": 50000, "subtotal": 500000}
+            for i in range(1, 8)
+        ]
+        db_create_order(customer_id=customer["id"], items=items, subtotal=3500000, discount_amount=0, total_price=3500000)
+        result = get_reorder_suggestions.invoke({"customer_id": customer["id"]})
+        assert len(result["data"]) <= 5

@@ -14,6 +14,7 @@ from src.tools.cancel_order import cancel_order
 from src.tools.get_customer import get_customer
 from src.tools.check_order_status import check_order_status
 from src.tools.get_order_history import get_order_history
+from src.tools.get_reorder_suggestions import get_reorder_suggestions
 from src.config.settings import settings
 from src.config.langfuse import get_langfuse_handler
 
@@ -21,6 +22,7 @@ tools = [
     search_products, get_product_detail, check_stock, calculate_price,
     create_quote, get_alternatives,
     create_order, cancel_order, get_customer, check_order_status, get_order_history,
+    get_reorder_suggestions,
 ]
 
 _llm_instance = None
