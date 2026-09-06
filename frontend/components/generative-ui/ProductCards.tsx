@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface ProductCard {
-  product_id: string;
+  product_id: number;
   name: string;
   category: string;
   price: number;
@@ -19,7 +19,8 @@ interface ProductCardsProps {
 }
 
 export function ProductCards({ data }: ProductCardsProps) {
-  const products = data.data || [];
+  const products = (data as unknown as ProductCard[] | { data: ProductCard[] }).data 
+    || (Array.isArray(data) ? data as unknown as ProductCard[] : []);
 
   if (products.length === 0) {
     return (
