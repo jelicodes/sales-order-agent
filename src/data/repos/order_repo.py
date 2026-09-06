@@ -71,6 +71,21 @@ class OrderRepo:
             )
             return [dict(row) for row in cursor.fetchall()]
 
+    def get_items_by_customer(self, customer_id: str, limit: int = 10) -> list[dict]:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """SELECT oi.product_id, oi.product_name, oi.qty, oi.price_per_unit,
+                          o.created_at as last_order_date
+                   FROM order_items oi
+                   JOIN orders o ON oi.order_id = o.id
+                   WHERE o.customer_id = ?
+                   ORDER BY o.created_at DESC
+                   LIMIT ?""",
+                (customer_id, limit),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
     def update_status(self, order_id: str, status: str) -> bool:
         with get_connection() as conn:
             cursor = conn.cursor()
