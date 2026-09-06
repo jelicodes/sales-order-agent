@@ -1,13 +1,12 @@
 from fastapi import APIRouter
-from src.data.schema import get_db_connection
+from src.data.schema import get_connection
 
 router = APIRouter()
 
 
 @router.get("/api/products")
 def get_products():
-    conn = get_db_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.execute(
             "SELECT id, name, category, base_price, moq, description, image_url FROM products ORDER BY id"
         )
@@ -24,5 +23,3 @@ def get_products():
             }
             for row in rows
         ]
-    finally:
-        conn.close()
