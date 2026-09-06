@@ -14,6 +14,7 @@ from src.api.health import router as health_router
 from src.api.session import router as session_router
 from src.api.chat import router as chat_router
 from src.api.stream import router as stream_router
+from src.api.products import router as products_router
 from src.api.models import ErrorResponse
 from src.config.langfuse import init_langfuse, shutdown_langfuse
 from src.config.settings import settings, APP_VERSION
@@ -98,6 +99,7 @@ app.include_router(health_router)
 app.include_router(session_router)
 app.include_router(chat_router)
 app.include_router(stream_router)
+app.include_router(products_router)
 
 
 if __name__ == "__main__":

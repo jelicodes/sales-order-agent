@@ -7,7 +7,7 @@
     "base_price": 85000,
     "moq": 100,
     "lead_time_days": 5,
-    "image_url": "/images/products/polo-premium-cotton.jpg"
+    "image_url": "/images/products/polo-premium-cotton.svg"
   },
   {
     "id": 2,
@@ -17,7 +17,7 @@
     "base_price": 65000,
     "moq": 100,
     "lead_time_days": 5,
-    "image_url": "/images/products/polo-basic.jpg"
+    "image_url": "/images/products/polo-basic.svg"
   },
   {
     "id": 3,
@@ -27,7 +27,7 @@
     "base_price": 55000,
     "moq": 50,
     "lead_time_days": 3,
-    "image_url": "/images/products/kaos-polos-premium.jpg"
+    "image_url": "/images/products/kaos-polos-premium.svg"
   },
   {
     "id": 4,
@@ -37,7 +37,7 @@
     "base_price": 35000,
     "moq": 50,
     "lead_time_days": 3,
-    "image_url": "/images/products/kaos-polos-standar.jpg"
+    "image_url": "/images/products/kaos-polos-standar.svg"
   },
   {
     "id": 5,
@@ -47,7 +47,7 @@
     "base_price": 250000,
     "moq": 25,
     "lead_time_days": 7,
-    "image_url": "/images/products/jaket-bomber-kulit.jpg"
+    "image_url": "/images/products/jaket-bomber-kulit.svg"
   },
   {
     "id": 6,
@@ -57,7 +57,7 @@
     "base_price": 180000,
     "moq": 50,
     "lead_time_days": 7,
-    "image_url": "/images/products/jaket-hoodie-premium.jpg"
+    "image_url": "/images/products/jaket-hoodie-premium.svg"
   },
   {
     "id": 7,
@@ -67,7 +67,7 @@
     "base_price": 120000,
     "moq": 30,
     "lead_time_days": 5,
-    "image_url": "/images/products/seragam-kantor-putih.jpg"
+    "image_url": "/images/products/seragam-kantor-putih.svg"
   },
   {
     "id": 8,
@@ -77,7 +77,7 @@
     "base_price": 95000,
     "moq": 30,
     "lead_time_days": 5,
-    "image_url": "/images/products/seragam-kerja-navy.jpg"
+    "image_url": "/images/products/seragam-kerja-navy.svg"
   },
   {
     "id": 9,
@@ -87,7 +87,7 @@
     "base_price": 145000,
     "moq": 30,
     "lead_time_days": 7,
-    "image_url": "/images/products/celana-chino-premium.jpg"
+    "image_url": "/images/products/celana-chino-premium.svg"
   },
   {
     "id": 10,
@@ -97,7 +97,7 @@
     "base_price": 130000,
     "moq": 30,
     "lead_time_days": 7,
-    "image_url": "/images/products/celana-jogger-kantor.jpg"
+    "image_url": "/images/products/celana-jogger-kantor.svg"
   },
   {
     "id": 11,
@@ -107,7 +107,7 @@
     "base_price": 85000,
     "moq": 50,
     "lead_time_days": 5,
-    "image_url": "/images/products/tas-selempang-premium.jpg"
+    "image_url": "/images/products/tas-selempang-premium.svg"
   },
   {
     "id": 12,
@@ -117,6 +117,7 @@
     "base_price": 45000,
     "moq": 100,
     "lead_time_days": 5,
-    "image_url": "/images/products/topi-baseball-custom.jpg"
+    "image_url": "/images/products/topi-baseball-custom.svg"
   }
 ]
+
