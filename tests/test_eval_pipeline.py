@@ -82,7 +82,6 @@ def dict_to_text(d) -> str:
 
 def assert_product_ids_present(results, expected_ids: list[int], result: EvalResult):
     """Check that expected product_ids appear in search results."""
-    # Handle both old list format and new structured dict format
     if isinstance(results, dict) and "data" in results:
         items = results["data"]
     else:
@@ -98,7 +97,6 @@ def assert_product_ids_present(results, expected_ids: list[int], result: EvalRes
 
 def assert_categories_present(results, expected_categories: list[str], result: EvalResult):
     """Check that expected categories appear in search results."""
-    # Handle both old list format and new structured dict format
     if isinstance(results, dict) and "data" in results:
         items = results["data"]
     else:

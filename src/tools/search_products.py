@@ -38,7 +38,7 @@ def search_products(query: str, category: str = "") -> dict:
     if isinstance(results, dict) and "error" in results:
         return results
 
-    # Enrich semantic results with full product data from repo
+
     enriched = []
     for item in results:
         product_id = item.get("product_id") or item.get("id")
