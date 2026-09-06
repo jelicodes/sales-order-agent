@@ -5,7 +5,7 @@ import logging
 from typing import AsyncGenerator
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage, trim_messages
+from langchain_core.messages import HumanMessage, AIMessage, trim_messages
 from langgraph.types import Command
 from groq import RateLimitError as GroqRateLimitError
 from src.agents.graph import create_sales_agent
@@ -83,6 +83,10 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
         # Process messages from result
         messages = result.get("messages", []) if isinstance(result, dict) else []
         for msg in messages:
+            # Skip HumanMessage - only process AI responses
+            if isinstance(msg, HumanMessage):
+                continue
+
             content = msg.content if hasattr(msg, "content") else str(msg)
 
             # Handle ORDER_PENDING in dict format
@@ -102,10 +106,7 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
                         })
                         break
                 else:
-                    # Dict content that isn't a known tool output
-                    text = json.dumps(content, ensure_ascii=False)
-                    if text:
-                        yield _sse_event("text_delta", text)
+                    logger.warning(f"[{request_id}] Unknown dict content type: {list(content.keys())}")
                     continue
 
             # Handle string content
