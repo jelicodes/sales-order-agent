@@ -38,6 +38,8 @@ def confirmation_node(state: AgentState) -> Command[Literal["llm"]]:
             for tc in msg.tool_calls:
                 if tc.get("name") == "create_order":
                     tool_call_id = tc.get("id", tool_call_id)
+
+    for msg in state["messages"]:
         content = msg.content if hasattr(msg, "content") else ""
         if isinstance(content, dict) and "ORDER_PENDING" in content:
             try:

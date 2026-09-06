@@ -81,3 +81,14 @@ def test_create_order_returns_structured():
     assert result["type"] == "order_summary"
     assert result["data"]["total_price"] == 7500000
     assert "ORDER_PENDING" in result
+
+
+def test_create_order_returns_error_on_invalid_json():
+    from src.tools.create_order import create_order
+    result = create_order.invoke({
+        "customer_id": "CUST-001",
+        "items_json": "not valid json",
+    })
+    assert isinstance(result, dict)
+    assert "error" in result
+    assert result["error"] == "items_json format tidak valid"
