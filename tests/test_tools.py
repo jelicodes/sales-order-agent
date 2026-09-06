@@ -133,73 +133,73 @@ class TestCheckStock:
 class TestCalculatePrice:
     def test_calculates_correct_tier_500(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 500})
-        assert result["price_per_unit"] == 70000
-        assert result["subtotal"] == 35000000
+        assert result["data"]["price_per_unit"] == 70000
+        assert result["data"]["subtotal"] == 35000000
 
     def test_calculates_correct_tier_100(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 100})
-        assert result["price_per_unit"] == 80000
-        assert result["subtotal"] == 8000000
+        assert result["data"]["price_per_unit"] == 80000
+        assert result["data"]["subtotal"] == 8000000
 
     def test_calculates_correct_tier_300(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 300})
-        assert result["price_per_unit"] == 75000
-        assert result["subtotal"] == 22500000
+        assert result["data"]["price_per_unit"] == 75000
+        assert result["data"]["subtotal"] == 22500000
 
     def test_tier_boundary_99(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 99})
-        assert result["price_per_unit"] == 85000
+        assert result["data"]["price_per_unit"] == 85000
 
     def test_tier_boundary_100(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 100})
-        assert result["price_per_unit"] == 80000
+        assert result["data"]["price_per_unit"] == 80000
 
     def test_tier_boundary_299(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 299})
-        assert result["price_per_unit"] == 80000
+        assert result["data"]["price_per_unit"] == 80000
 
     def test_tier_boundary_300(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 300})
-        assert result["price_per_unit"] == 75000
+        assert result["data"]["price_per_unit"] == 75000
 
     def test_applies_percentage_discount(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 500, "discount_code": "BULK500"})
-        assert result["discount"] is not None
-        assert result["discount"]["type"] == "percentage"
-        assert result["discount_amount"] > 0
-        assert result["total"] < result["subtotal"]
+        assert result["data"]["discount"] is not None
+        assert result["data"]["discount"]["type"] == "percentage"
+        assert result["data"]["discount_amount"] > 0
+        assert result["data"]["total"] < result["data"]["subtotal"]
 
     def test_applies_fixed_discount(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 200, "discount_code": "HEMAT20K"})
-        assert result["discount"] is not None
-        assert result["discount"]["type"] == "fixed"
-        assert result["discount_amount"] == 20000
+        assert result["data"]["discount"] is not None
+        assert result["data"]["discount"]["type"] == "fixed"
+        assert result["data"]["discount_amount"] == 20000
 
     def test_invalid_discount_code(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 100, "discount_code": "TIDAKADA"})
-        assert result["discount"] is None
-        assert result["discount_amount"] == 0
-        assert result["total"] == result["subtotal"]
+        assert result["data"]["discount"] is None
+        assert result["data"]["discount_amount"] == 0
+        assert result["data"]["total"] == result["data"]["subtotal"]
 
     def test_empty_discount_code(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 100, "discount_code": ""})
-        assert result["discount"] is None
-        assert result["discount_amount"] == 0
+        assert result["data"]["discount"] is None
+        assert result["data"]["discount_amount"] == 0
 
     def test_total_equals_subtotal_minus_discount(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 500, "discount_code": "BULK500"})
-        expected = result["subtotal"] - result["discount_amount"]
-        assert result["total"] == expected
+        expected = result["data"]["subtotal"] - result["data"]["discount_amount"]
+        assert result["data"]["total"] == expected
 
     def test_has_tier_info(self):
         result = calculate_price.invoke({"product_id": 1, "quantity": 500})
-        assert "tier" in result
-        assert "pcs" in result["tier"]
+        assert "tiers" in result["data"]
+        assert len(result["data"]["tiers"]) > 0
 
     def test_different_products_different_prices(self):
         r1 = calculate_price.invoke({"product_id": 1, "quantity": 100})
         r2 = calculate_price.invoke({"product_id": 2, "quantity": 100})
-        assert r1["price_per_unit"] != r2["price_per_unit"]
+        assert r1["data"]["price_per_unit"] != r2["data"]["price_per_unit"]
 
 
 # ============================================================
@@ -320,14 +320,13 @@ class TestEdgeCases:
     def test_quantity_zero(self):
         """Price calculation with zero quantity"""
         result = calculate_price.invoke({"product_id": 1, "quantity": 0})
-        assert result["subtotal"] == 0
-        assert result["total"] == 0
+        assert result["error"] == "Quantity harus lebih dari 0"
 
     def test_very_large_quantity(self):
         """Price calculation with very large quantity"""
         result = calculate_price.invoke({"product_id": 1, "quantity": 100000})
-        assert result["price_per_unit"] == 70000  # Should use highest tier
-        assert result["subtotal"] == 7000000000
+        assert result["data"]["price_per_unit"] == 70000
+        assert result["data"]["subtotal"] == 7000000000
 
     def test_stock_check_with_zero_quantity(self):
         """Stock check with zero quantity should be available"""
@@ -344,6 +343,5 @@ class TestEdgeCases:
     def test_discount_min_qty_not_met(self):
         """Discount with quantity below minimum should not apply."""
         result = calculate_price.invoke({"product_id": 1, "quantity": 50, "discount_code": "BULK500"})
-        # BULK500 requires min_qty 500, so discount should NOT apply
-        assert result["discount"] is None
-        assert result["discount_amount"] == 0
+        assert result["data"]["discount"] is None
+        assert result["data"]["discount_amount"] == 0

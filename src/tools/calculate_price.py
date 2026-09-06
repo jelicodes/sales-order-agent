@@ -13,19 +13,31 @@ class CalculatePriceInput(BaseModel):
 
 @tool(args_schema=CalculatePriceInput)
 def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> dict:
-    """Hitung harga berdasarkan jumlah pesanan, tier harga, dan diskon yang berlaku."""
+    """Hitung harga berdasarkan jumlah pesanan. Menghasilkan price table."""
     if quantity <= 0:
-        return {
-            "product_id": product_id, "quantity": quantity,
-            "price_per_unit": 0, "subtotal": 0,
-            "discount": None, "discount_amount": 0,
-            "total": 0, "tier": "N/A"
-        }
-    tier = _product_repo.get_price_tier(product_id, quantity)
-    if not tier:
-        return {"error": "Tidak ada harga tersedia untuk quantity ini"}
-    price_per_unit = tier["price_per_unit"]
+        return {"error": "Quantity harus lebih dari 0"}
+
+    product = _product_repo.get_by_id(product_id)
+    if not product:
+        return {"error": f"Produk dengan ID {product_id} tidak ditemukan"}
+
+    tiers = _product_repo.get_price_tiers(product_id)
+    if not tiers:
+        return {"error": "Tidak ada harga tersedia"}
+
+    selected_tier = None
+    for tier in tiers:
+        max_qty = tier.get("max_qty") or float("inf")
+        if tier["min_qty"] <= quantity <= max_qty:
+            selected_tier = tier
+            break
+
+    if not selected_tier:
+        selected_tier = tiers[-1]
+
+    price_per_unit = selected_tier["price_per_unit"]
     subtotal = price_per_unit * quantity
+
     discount_amount = 0
     discount_info = None
     if discount_code:
@@ -39,10 +51,23 @@ def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> 
                 else:
                     discount_amount = min(discount["value"], subtotal)
                 discount_info = {"code": discount["code"], "type": discount["type"], "value": discount["value"]}
+
     total = subtotal - discount_amount
+
     return {
-        "product_id": product_id, "quantity": quantity,
-        "price_per_unit": price_per_unit, "subtotal": subtotal,
-        "discount": discount_info, "discount_amount": discount_amount,
-        "total": total, "tier": f"{tier['min_qty']}-{tier['max_qty'] or '∞'} pcs"
+        "type": "price_breakdown",
+        "data": {
+            "product_id": product_id,
+            "product_name": product["name"],
+            "quantity": quantity,
+            "price_per_unit": price_per_unit,
+            "subtotal": subtotal,
+            "discount": discount_info,
+            "discount_amount": discount_amount,
+            "total": total,
+            "tiers": [
+                {"min_qty": t["min_qty"], "max_qty": t.get("max_qty"), "price_per_unit": t["price_per_unit"]}
+                for t in tiers
+            ],
+        },
     }

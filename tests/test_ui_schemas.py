@@ -58,3 +58,13 @@ def test_search_products_returns_structured():
         assert "product_id" in card
         assert "name" in card
         assert "price" in card
+
+
+def test_calculate_price_returns_structured():
+    from src.tools.calculate_price import calculate_price
+    result = calculate_price.invoke({"product_id": 1, "quantity": 50})
+    assert isinstance(result, dict)
+    assert result["type"] == "price_breakdown"
+    assert "data" in result
+    assert "tiers" in result["data"]
+    assert "total" in result["data"]

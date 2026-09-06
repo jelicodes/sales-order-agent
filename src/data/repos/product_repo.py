@@ -78,6 +78,15 @@ class ProductRepo:
             )
             return [dict(row) for row in cursor.fetchall()]
 
+    def get_price_tiers(self, product_id: int) -> list[dict]:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM price_tiers WHERE product_id = ? ORDER BY min_qty ASC",
+                (product_id,),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
     def get_discount(self, code: str) -> dict | None:
         if code in _discount_cache:
             return _discount_cache[code]
