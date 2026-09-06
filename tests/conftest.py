@@ -5,7 +5,7 @@ from src.main import app
 from src.agents.graph import create_sales_agent
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client():
     with TestClient(app) as c:
         yield c
