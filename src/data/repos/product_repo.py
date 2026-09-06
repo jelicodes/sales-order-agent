@@ -5,6 +5,7 @@ from src.data.schema import get_connection
 
 _product_cache = TTLCache(maxsize=500, ttl=300)
 _price_tier_cache = TTLCache(maxsize=200, ttl=300)
+_all_tiers_cache = TTLCache(maxsize=200, ttl=300)
 _discount_cache = TTLCache(maxsize=50, ttl=600)
 
 
@@ -13,6 +14,7 @@ class ProductRepo:
     def clear_caches(self):
         _product_cache.clear()
         _price_tier_cache.clear()
+        _all_tiers_cache.clear()
         _discount_cache.clear()
 
     def search(self, query: str, category: str | None = None) -> list[dict]:
@@ -79,13 +81,17 @@ class ProductRepo:
             return [dict(row) for row in cursor.fetchall()]
 
     def get_price_tiers(self, product_id: int) -> list[dict]:
+        if product_id in _all_tiers_cache:
+            return _all_tiers_cache[product_id]
         with get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT * FROM price_tiers WHERE product_id = ? ORDER BY min_qty ASC",
                 (product_id,),
             )
-            return [dict(row) for row in cursor.fetchall()]
+            result = [dict(row) for row in cursor.fetchall()]
+            _all_tiers_cache[product_id] = result
+            return result
 
     def get_discount(self, code: str) -> dict | None:
         if code in _discount_cache:

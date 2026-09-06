@@ -25,13 +25,7 @@ def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> 
     if not tiers:
         return {"error": "Tidak ada harga tersedia"}
 
-    selected_tier = None
-    for tier in tiers:
-        max_qty = tier.get("max_qty") or float("inf")
-        if tier["min_qty"] <= quantity <= max_qty:
-            selected_tier = tier
-            break
-
+    selected_tier = _product_repo.get_price_tier(product_id, quantity)
     if not selected_tier:
         selected_tier = tiers[-1]
 
@@ -43,9 +37,10 @@ def calculate_price(product_id: int, quantity: int, discount_code: str = "") -> 
     if discount_code:
         discount = _product_repo.get_discount(discount_code)
         if discount:
+            discount_eligible = True
             if discount.get("min_qty") and quantity < discount["min_qty"]:
-                discount = None
-            else:
+                discount_eligible = False
+            if discount_eligible:
                 if discount["type"] == "percentage":
                     discount_amount = subtotal * (discount["value"] / 100)
                 else:
