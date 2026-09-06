@@ -13,27 +13,35 @@ from src.tools.get_alternatives import get_alternatives
 class TestSearchProducts:
     def test_returns_results_for_valid_query(self):
         results = search_products.invoke("polo")
-        assert isinstance(results, list)
-        assert len(results) > 0
+        assert isinstance(results, dict)
+        assert results["type"] == "product_cards"
+        assert isinstance(results["data"], list)
+        assert len(results["data"]) > 0
 
     def test_returns_results_by_category(self):
         results = search_products.invoke({"query": "", "category": "Kaos"})
-        assert isinstance(results, list)
-        assert len(results) > 0
-        assert all(r["category"] == "Kaos" for r in results)
+        assert isinstance(results, dict)
+        assert results["type"] == "product_cards"
+        assert isinstance(results["data"], list)
+        assert len(results["data"]) > 0
+        assert all(r["category"] == "Kaos" for r in results["data"])
 
     def test_returns_empty_for_no_match(self):
         results = search_products.invoke("jas formal pria mewah")
-        assert isinstance(results, list)
+        assert isinstance(results, dict)
+        assert results["type"] == "product_cards"
+        assert isinstance(results["data"], list)
 
     def test_returns_multiple_products(self):
         results = search_products.invoke("kaos")
-        assert len(results) >= 2
+        assert isinstance(results, dict)
+        assert len(results["data"]) >= 2
 
     def test_result_has_required_fields(self):
         results = search_products.invoke("polo")
-        assert len(results) > 0
-        for r in results:
+        assert isinstance(results, dict)
+        assert len(results["data"]) > 0
+        for r in results["data"]:
             assert "product_id" in r or "id" in r
             assert "name" in r or "category" in r
 
@@ -329,7 +337,9 @@ class TestEdgeCases:
     def test_search_with_empty_string(self):
         """Search with empty string"""
         results = search_products.invoke("")
-        assert isinstance(results, list)
+        assert isinstance(results, dict)
+        assert results["type"] == "product_cards"
+        assert isinstance(results["data"], list)
 
     def test_discount_min_qty_not_met(self):
         """Discount with quantity below minimum should not apply."""

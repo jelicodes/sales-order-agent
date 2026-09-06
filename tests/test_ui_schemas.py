@@ -3,6 +3,7 @@ from src.api.schemas import (
     PriceTier, OrderSummaryData, OrderItem,
     ReorderSuggestionsData, ReorderItem,
 )
+from src.tools.search_products import search_products
 
 
 def test_product_card_serializes():
@@ -45,3 +46,15 @@ def test_reorder_suggestions_serializes():
     d = reorder.model_dump()
     assert d["type"] == "reorder_suggestions"
     assert len(d["items"]) == 1
+
+
+def test_search_products_returns_structured():
+    result = search_products.invoke({"query": "kemeja"})
+    assert isinstance(result, dict)
+    assert result["type"] == "product_cards"
+    assert isinstance(result["data"], list)
+    if result["data"]:
+        card = result["data"][0]
+        assert "product_id" in card
+        assert "name" in card
+        assert "price" in card

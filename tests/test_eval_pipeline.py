@@ -80,9 +80,14 @@ def dict_to_text(d) -> str:
     return json.dumps(d, ensure_ascii=False).lower()
 
 
-def assert_product_ids_present(results: list[dict], expected_ids: list[int], result: EvalResult):
+def assert_product_ids_present(results, expected_ids: list[int], result: EvalResult):
     """Check that expected product_ids appear in search results."""
-    found_ids = [r.get("product_id") for r in results]
+    # Handle both old list format and new structured dict format
+    if isinstance(results, dict) and "data" in results:
+        items = results["data"]
+    else:
+        items = results
+    found_ids = [r.get("product_id") for r in items]
     for pid in expected_ids:
         if pid in found_ids:
             result.details.append(f"  + product_id {pid} found in results")
@@ -91,9 +96,14 @@ def assert_product_ids_present(results: list[dict], expected_ids: list[int], res
             result.details.append(f"  - product_id {pid} NOT found in results (found: {found_ids})")
 
 
-def assert_categories_present(results: list[dict], expected_categories: list[str], result: EvalResult):
+def assert_categories_present(results, expected_categories: list[str], result: EvalResult):
     """Check that expected categories appear in search results."""
-    found_categories = [r.get("category", "").lower() for r in results]
+    # Handle both old list format and new structured dict format
+    if isinstance(results, dict) and "data" in results:
+        items = results["data"]
+    else:
+        items = results
+    found_categories = [r.get("category", "").lower() for r in items]
     for cat in expected_categories:
         if cat.lower() in found_categories:
             result.details.append(f"  + category '{cat}' found in results")
