@@ -122,7 +122,24 @@ async def _stream_chat(req: ChatRequest, request: Request) -> AsyncGenerator[str
                     except ValueError:
                         yield _sse_event("text_delta", content)
                 else:
-                    yield _sse_event("text_delta", content)
+                    # Try to parse as JSON to detect tool outputs
+                    try:
+                        parsed = json.loads(content)
+                        if isinstance(parsed, dict):
+                            # Check for structured tool outputs
+                            for key in ("product_cards", "price_breakdown", "order_summary", "reorder_suggestions"):
+                                if key in parsed:
+                                    yield _sse_event("tool_output", {
+                                        "type": key,
+                                        "data": parsed[key],
+                                    })
+                                    break
+                            else:
+                                yield _sse_event("text_delta", content)
+                        else:
+                            yield _sse_event("text_delta", content)
+                    except (json.JSONDecodeError, ValueError):
+                        yield _sse_event("text_delta", content)
 
         yield _sse_event("stream_end", {"status": "ok"})
 
