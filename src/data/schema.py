@@ -43,7 +43,8 @@ SCHEMA_SQL = """
         description TEXT,
         base_price REAL NOT NULL,
         moq INTEGER NOT NULL DEFAULT 1,
-        lead_time_days INTEGER NOT NULL DEFAULT 5
+        lead_time_days INTEGER NOT NULL DEFAULT 5,
+        image_url TEXT DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS product_variants (
